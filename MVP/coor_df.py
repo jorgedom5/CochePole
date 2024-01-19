@@ -16,25 +16,25 @@ import xml.etree.ElementTree as ET
 #--------------------------------------------------------------
 
 def distancia_entre_puntos(coord1, coord2):
-    lat1, lon1, _ = map(radians, coord1)
-    lat2, lon2, _ = map(radians, coord2)
+    lat1, lon1, alt1 = map(radians, coord1)
+    lat2, lon2, alt2 = map(radians, coord2)
 
     # Haversine formula
     dlat = lat2 - lat1
     dlon = lon2 - lon1
     a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    distance = 6371000 * c  # Radius of Earth in kilometers
+    distance = 6371000 * c 
 
     return distance
 
 def kml_df(kml_folder_path):
-    data = {"viaje": [], "punto": [], "coordinates": []}
-    viaje_count = 0  # Inicializamos el contador de viajes
+    data = {"viaje": [], "punto": [], "latitude": [], "longitude": [], "altitude": []}
+    viaje_count = 0  
 
     for _ in os.listdir(kml_folder_path):
         if _.endswith(".kml"):
-            kml_file_path = os.path.join(kml_folder_path, _)
+            kml_file_path = os.path.join(kml_folder_path, _) #ANALIZA TODOS LOS KML DENTRO DE LA CARPETA ESPECIFICADA, EN ESTE CASO data.
 
             with open(kml_file_path, "r", encoding="utf-8") as file:
                 kml_data = file.read()
@@ -47,13 +47,15 @@ def kml_df(kml_folder_path):
                 coordinates_str = coordinates_element.text
                 coordinates_list = [tuple(map(float, _.split(','))) for _ in coordinates_str.split()]
 
-                viaje_count += 1  # Incrementamos el contador de viajes
+                viaje_count += 1 
                 viaje_key = f"viaje {viaje_count}"
 
                 for _, coords in enumerate(coordinates_list):
                     data["viaje"].append(viaje_key)
                     data["punto"].append(_ + 1)
-                    data["coordinates"].append(coords)
+                    data["latitude"].append(coords[1])
+                    data["longitude"].append(coords[0])
+                    data["altitude"].append(coords[2])
 
     df = pd.DataFrame(data)
     return df
@@ -62,10 +64,14 @@ def calcular_distancias(dataframe): #para calcular las distancias con nuestros d
     distancia_list = []
 
     for _ in range(len(dataframe) - 1):
-        distancia = distancia_entre_puntos(dataframe["coordinates"].iloc[_], dataframe["coordinates"].iloc[_+1])
+        coord1 = (dataframe["latitude"].iloc[_], dataframe["longitude"].iloc[_], dataframe["altitude"].iloc[_])
+        coord2 = (dataframe["latitude"].iloc[_+1], dataframe["longitude"].iloc[_+1], dataframe["altitude"].iloc[_+1])
+        distancia = distancia_entre_puntos(coord1, coord2)
         distancia_list.append(distancia)
 
-    dataframe["distancia"] = distancia_list + [0] 
+    distancia_list.append(0)
+
+    dataframe["distancia"] = distancia_list 
 
 
 #--------------------------------------------------------------
