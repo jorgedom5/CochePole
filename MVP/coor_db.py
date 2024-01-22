@@ -9,6 +9,8 @@ import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
 import os
 import xml.etree.ElementTree as ET
+import psycopg2
+from dotenv import load_dotenv 
 
 #--------------------------------------------------------------
 # Submódulo 1: Funciones
@@ -24,7 +26,7 @@ def distancia_entre_puntos(coord1, coord2):
     dlon = lon2 - lon1
     a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
     c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    distance = 6371000 * c 
+    distance = 6371000 * c  
 
     return distance
 
@@ -48,7 +50,7 @@ def kml_df(kml_folder_path):
                 coordinates_list = [tuple(map(float, _.split(','))) for _ in coordinates_str.split()]
 
                 viaje_count += 1 
-                viaje_key = f"viaje {viaje_count}"
+                viaje_key = viaje_count
 
                 for _, coords in enumerate(coordinates_list):
                     data["viaje"].append(viaje_key)
@@ -60,19 +62,49 @@ def kml_df(kml_folder_path):
     df = pd.DataFrame(data)
     return df
 
-def calcular_distancias(dataframe): #para calcular las distancias con nuestros datos usando la fórmula anterior (fórmula dentro de fórmula)
+def calcular_distancias(dataframe): 
     distancia_list = []
 
-    for _ in range(len(dataframe) - 1):
-        coord1 = (dataframe["latitude"].iloc[_], dataframe["longitude"].iloc[_], dataframe["altitude"].iloc[_])
-        coord2 = (dataframe["latitude"].iloc[_+1], dataframe["longitude"].iloc[_+1], dataframe["altitude"].iloc[_+1])
-        distancia = distancia_entre_puntos(coord1, coord2)
+    for i in range(len(dataframe) - 1):
+        coord1 = (dataframe["latitude"].iloc[i], dataframe["longitude"].iloc[i], dataframe["altitude"].iloc[i])
+        coord2 = (dataframe["latitude"].iloc[i+1], dataframe["longitude"].iloc[i+1], dataframe["altitude"].iloc[i+1])
+        distancia = distancia_entre_puntos(coord1, coord2) #para calcular las distancias con nuestros datos usando la fórmula anterior (fórmula dentro de fórmula)
         distancia_list.append(distancia)
 
     distancia_list.append(0)
 
-    dataframe["distancia"] = distancia_list 
+    dataframe["distancia"] = distancia_list
+    
+def insert_into_postgres(conn, df):
+    cursor = conn.cursor()
 
+    for index, row in df.iterrows():
+        
+        cursor.execute("""
+            INSERT INTO viajes (viaje_id, ruta)
+            VALUES (%s, %s)
+            ON CONFLICT (viaje_id) DO NOTHING
+        """, (
+            row["viaje"],
+            f"Ruta {row['viaje']}"  
+        ))
+        
+        cursor.execute("""
+            INSERT INTO coordenadas (viaje_id, punto_ruta, latitud, longitud, altura, distancia)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            row["viaje"],
+            row["punto"],
+            row["latitude"],
+            row["longitude"],
+            row["altitude"],
+            row["distancia"]
+        ))
+            
+
+    conn.commit()
+    cursor.close()
+    
 
 #--------------------------------------------------------------
 # Submódulo 2: Clase main()
@@ -80,7 +112,9 @@ def calcular_distancias(dataframe): #para calcular las distancias con nuestros d
 #--------------------------------------------------------------
 
 def main():
-    kml_folder_path = "data"
+    load_dotenv()
+    kml_folder_path = "/app/data" # "/app/data" CON DOCKER, "data" A SECAS SIN, en cloud será a secas tb supongo
+
 
     df = kml_df(kml_folder_path)
 
@@ -88,8 +122,16 @@ def main():
 
     print(df.head())
     
-    df.to_csv("data.csv", encoding="utf-8", index=False) #IMPORTANTE: QUITAD ESTO, ES SOLO PARA PROBAR Y VER LOS DATOS EN UN CSV
-    
+    conn = psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+    )
+
+    insert_into_postgres(conn, df)
+
+    conn.close()
 
 if __name__ == "__main__":
     main()
