@@ -136,10 +136,11 @@ def asignar_vehiculos_a_viaje(df):
 def insert_into_pubsub(pubsub_class, df):
     for index, row in df.iterrows():
         vehicle_payload = {
-            "vehicle_id": row["vehicle_id"],
-            "location": (row["latitude"], row["longitude"]),
+            "vehicle_id": int(row["vehicle_id"]),
+            "location": str((row["latitude"],row["longitude"])),
             "num_plazas": int(row["num_plazas"]) 
         }
+        print(vehicle_payload)
         pubsub_class.publishMessages(vehicle_payload)
         time.sleep(1)
 
