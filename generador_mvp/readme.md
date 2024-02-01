@@ -6,8 +6,8 @@ Para que funcione:
 
 ```powershell
 python3 generator.py `
-    --project_id "ID DEL PROJECTO" `
-    --topic_name "NOMBRE DEL TOPIC"
+    --project_id "dataproject-2-413010" `
+    --topic_name "topic_dp2"
 ```
 
 De momento solo manda por coordenadas el viaje, me gustaría a poder ser que mandara todo de golpe. Este lee de la carpeta data los viajes.
