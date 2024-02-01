@@ -1,0 +1,8 @@
+pandas
+google-cloud-pubsub==latest
+google-api-core==latest
+proto-plus==latest
+apache-beam==latest
+google-apitools==latest
+google-cloud-bigquery==latest
+protobuf==latest
