@@ -82,28 +82,34 @@ def asignar_vehiculos_a_viaje(df):
         vehiculo_id = random.randint(1, 1000)
         num_plazas = random.randint(1, 4)
 
-        inicio_viaje = df.loc[df['viaje_id'] == viaje_id, ['latitud', 'longitud', 'altura']].iloc[0]
 
         df.loc[df['viaje_id'] == viaje_id, 'vehicle_id'] = vehiculo_id
         df.loc[df['viaje_id'] == viaje_id, 'num_plazas'] = num_plazas
-        df.loc[df['viaje_id'] == viaje_id, 'latitud'] = inicio_viaje['latitud']
-        df.loc[df['viaje_id'] == viaje_id, 'longitud'] = inicio_viaje['longitud']
 
 def insert_into_pubsub(pubsub_class, df):
-    for viaje_id in df['viaje_id'].unique():
-        trip_data = df[df['viaje_id'] == viaje_id].to_dict(orient='records')
-        for index, row in df[df['viaje_id'] == viaje_id].iterrows():
-            for segundo in range(len(df[df['viaje_id'] == viaje_id])):
-                vehicle_payload = {
-                    "viaje_id": int(row["viaje_id"]),
-                    "vehicle_id": int(row["vehicle_id"]),
-                    "location": str((row["latitud"], row["longitud"])),
-                    "num_plazas": int(row["num_plazas"]) 
-                }
-                pubsub_class.publishMessages(vehicle_payload)
-                time.sleep(1)
-                if segundo < len(df[df['viaje_id'] == viaje_id]) - 1:
-                    row = df[df['viaje_id'] == viaje_id].iloc[segundo + 1]
+    viaje_id_random = random.randint(1, 38)  # VIAJE ALEATORIO
+    
+    print(f"viaje_id: {viaje_id_random}")
+    
+    trip_rows = df[df['viaje_id'] == viaje_id_random]
+    
+    if trip_rows.empty:
+        print("Error viaje_id.")
+        return
+        
+    for index, row in trip_rows.iterrows():
+        
+        # Obtener las coordenadas del punto de ruta actual
+        vehicle_payload = {
+            "viaje_id": int(row["viaje_id"]),
+            "vehicle_id": int(row["vehicle_id"]),
+            "location": str((row['latitud'], row['longitud'])),
+            "num_plazas": int(row["num_plazas"]) 
+        }
+        
+        pubsub_class.publishMessages(vehicle_payload)
+        time.sleep(1)
+
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
