@@ -9,6 +9,11 @@ python3 generator.py `
     --project_id "dataproject-2-413010" `
     --topic_name "topic_dp2"
 ```
+```powershell
+python3 generador_usuarios.py `
+    --project_id "dataproject-2-413010" `
+    --topic_name "dp2_clientes"
+```
 
 De momento solo manda por coordenadas el viaje, me gustaría a poder ser que mandara todo de golpe. Este lee de la carpeta data los viajes.
 

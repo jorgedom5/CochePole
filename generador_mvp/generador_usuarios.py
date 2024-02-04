@@ -4,15 +4,13 @@ from google.cloud import pubsub_v1
 import threading
 import argparse
 import logging
-import secrets
 import random
 import string
 import json
 import time
 from google.cloud import bigquery
 
-
-"""#Input arguments
+# Input arguments
 parser = argparse.ArgumentParser(description=('User Data Generator'))
 
 parser.add_argument(
@@ -24,10 +22,9 @@ parser.add_argument(
     required=True,
     help='PubSub topic name.')
 
-args, opts = parser.parse_known_args()"""
+args, opts = parser.parse_known_args()
 
-#Creamos cliente y especificamos origen de los datos
-def obtener_viaje_aleatorio():
+def viaje_cliente():
     try:
         client = bigquery.Client()
 
@@ -40,8 +37,11 @@ def obtener_viaje_aleatorio():
         query = f"""
                 SELECT
                     viaje_id,
+                    punto_ruta,
                     latitud,
-                    longitud
+                    longitud,
+                    altura,
+                    distancia
                 FROM
                     `{dataset_id}.{table_id}`
                 ORDER BY
@@ -50,21 +50,56 @@ def obtener_viaje_aleatorio():
             """
         df_users = client.query(query).to_dataframe()
 
-        for index , row in df_users.iterrows():
-            print(f"Viaje ID: {row['viaje_id']}, Latitud: {row['latitud']}, Longitud: {row['longitud']}")
+        df_users['usuario_id'] = random.randint(1, 100000)
+
+        for index, row in df_users.iterrows():
+            print(f"Usuario ID: {row['usuario_id']},Viaje ID: {row['viaje_id']},Punto_ruta: {row['punto_ruta']}, Latitud: {row['latitud']}, Longitud: {row['longitud']}, Altura: {row['altura']}, Distancia: {row['distancia']}")
+        
+        return df_users
+
     except Exception as e:
         logging.error(f"Error al obtener viaje aleatorio: {str(e)}")
 
+class PubSubMessages:
+    def __init__(self, project_id: str, topic_name: str):
+        self.publisher = pubsub_v1.PublisherClient()
+        self.project_id = project_id
+        self.topic_name = topic_name
 
-# Ejecuta la consulta cada 5 segundos
-try:
-    while True:
-        obtener_viaje_aleatorio()
-        time.sleep(5)
-except KeyboardInterrupt:
+    def publishMessages(self, message: str):
+        json_str = json.dumps(message)
+        topic_path = self.publisher.topic_path(self.project_id, self.topic_name)
+        self.publisher.publish(topic_path, json_str.encode("utf-8"))
+        logging.info("New user needs a ride. Id: %s", message['usuario_id'])
+        print(f"Published message: {json_str}")
+
+    def __exit__(self):
+        self.publisher.transport.close()
+        logging.info("PubSub Client closed.")
+    
+    def insert_into_pubsub(self, pubsub_class, df_users):
+        for index, row in df_users.iterrows():
+            user_payload = {
+                "usuario_id": int(row["usuario_id"]),
+                "viaje_id": int(row["viaje_id"]),
+                "location": str((row['latitud'], row['longitud'])),
+                "Distancia": int(row['distancia'])
+            }
+            pubsub_class.publishMessages(user_payload)
+            time.sleep(1)
+
+def main():
+    pubsub_class = PubSubMessages(args.project_id, args.topic_name)
+    try:
+        while True:
+            df_users = viaje_cliente()
+            pubsub_class.insert_into_pubsub(pubsub_class, df_users)
+            time.sleep(1)
+    except KeyboardInterrupt:
         logging.info("Script interrumpido por el usuario.")
-finally:
-    logging.info("Cerrando el script de forma ordenada (si es necesario).")
+    finally:
+        pubsub_class.__exit__()
+        logging.info("Cerrando el script de forma ordenada (si es necesario).")
 
-
-
+if __name__ == "__main__":
+    main()
