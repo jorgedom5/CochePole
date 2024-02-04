@@ -1,3 +1,14 @@
+"""
+ESTE 
+CÓDIGO
+AÚN
+ESTÁ
+EN
+CONSTRUCCIÓN,
+GRACIAS
+
+"""
+
 import pandas as pd
 import os
 from google.cloud import pubsub_v1
@@ -10,9 +21,9 @@ import string
 import json
 import time
 from google.cloud import bigquery
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import wait
 
+
+#Input arguments
 parser = argparse.ArgumentParser(description=('Vehicle Data Generator'))
 
 parser.add_argument(
@@ -65,68 +76,47 @@ class PubSubMessages:
         self.publisher.transport.close()
         logging.info("PubSub Client closed.")
 
-def asignar_vehiculos_a_viaje(df, viaje_id):
+
+def asignar_vehiculos_a_viaje(df):
     for viaje_id in df['viaje_id'].unique():
         vehiculo_id = random.randint(1, 1000)
         num_plazas = random.randint(1, 4)
 
+
         df.loc[df['viaje_id'] == viaje_id, 'vehicle_id'] = vehiculo_id
         df.loc[df['viaje_id'] == viaje_id, 'num_plazas'] = num_plazas
 
-def insert_into_pubsub(pubsub_class, df, viaje_id, cancel_event):
-    trip_rows = df[df['viaje_id'] == viaje_id]
-
+def insert_into_pubsub(pubsub_class, df):
+    viaje_id_random = random.randint(1, 38)  # VIAJE ALEATORIO
+    
+    print(f"viaje_id: {viaje_id_random}")
+    
+    trip_rows = df[df['viaje_id'] == viaje_id_random]
+    
     if trip_rows.empty:
-        print(f"Error viaje_id: {viaje_id}")
+        print("Error viaje_id.")
         return
-
+        
     for index, row in trip_rows.iterrows():
+        
+        # Obtener las coordenadas del punto de ruta actual
         vehicle_payload = {
             "viaje_id": int(row["viaje_id"]),
             "vehicle_id": int(row["vehicle_id"]),
             "location": str((row['latitud'], row['longitud'])),
-            "num_plazas": int(row["num_plazas"])
+            "num_plazas": int(row["num_plazas"]) 
         }
-
+        
         pubsub_class.publishMessages(vehicle_payload)
-
-        # Check for cancellation
-        if cancel_event.is_set():
-            print("Thread canceled.")
-            return
-
         time.sleep(1)
-
-def process_trip(pubsub_class, df, cancel_event):
-    viaje_id = random.choice(df['viaje_id'].unique())
-    
-    asignar_vehiculos_a_viaje(df, viaje_id)
-    
-    insert_into_pubsub(pubsub_class, df, viaje_id, cancel_event)
 
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
-
-    cancel_event = threading.Event()
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = []
-
-        try:
-            for _ in range(3):
-                future = executor.submit(process_trip, pubsub_class, df, cancel_event)
-                futures.append(future)
-
-            done, not_done = wait(futures, timeout=None, return_when='ALL_COMPLETED')
-
-        except KeyboardInterrupt:
-            print("Keyboard interrupt received. Stopping threads.")
-
-            cancel_event.set()
-
-        finally:
-            pubsub_class.__exit__()
+    
+    asignar_vehiculos_a_viaje(df)
+    
+    insert_into_pubsub(pubsub_class, df)
 
 if __name__ == "__main__":
     main()
