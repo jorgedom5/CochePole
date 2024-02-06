@@ -1,31 +1,37 @@
+@font-face {
+    font-family: 'Silkscreen';
+    src: url('../static/slkscreb.ttf') format('truetype');
+    font-display: swap;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Silkscreen', sans-serif;
     margin: 0;
     padding: 0;
-    background: url('https://i.postimg.cc/SSLPqxyF/back4.jpg') center center fixed; /* Reemplaza 'URL_DEL_FONDO' con la URL de tu imagen de fondo */
+    background: url('https://i.postimg.cc/4dYNzBRC/OIG1.jpg') center center fixed;
     background-size: cover;
 }
 
 header {
-    background-color: #262626; /* Azul oscuro */
-    padding: 10px; /* Espaciado interno */
+    background-color: #000;
+    padding: 5px;
     text-align: center;
-    color: #ff4d4d; /* Rojo palo */
+    color: #fff;
 }
 
 header img {
-    max-width: auto; /* Ajusta el tamaño máximo de la imagen */
-    height: 150px;
-    margin-bottom: 10px; /* Espaciado inferior de la imagen */
+    max-width: auto;
+    height: 80px;
+    margin-bottom: 5px;
 }
 
 .container {
     max-width: 600px;
     margin: 50px auto;
-    background-color: #fff;
+    background-color: #1a1a1a; /* Negro */
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Sutil sombra */
 }
 
 button {
@@ -33,19 +39,20 @@ button {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
-    background-color: #ff4d4d; /* Rojo palo */
+    background-color: #ff4d4d;
     color: #fff;
-    border: none;
-    border-radius: 4px;
+    border: 2px solid #fff;
+    border-radius: 0px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 25px;
+    font-family: 'Silkscreen', sans-serif;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
-    background-color: #ff3333; /* Rojo más oscuro */
+    background-color: #ff3333;
 }
 
 button:active {
-    background-color: #cc0000; /* Rojo más oscuro aún */
+    background-color: #cc0000;
 }
