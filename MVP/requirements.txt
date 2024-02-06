@@ -1,4 +1,0 @@
-pandas
-psycopg2
-python-dotenv
-confluent_kafka
