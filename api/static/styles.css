@@ -1,0 +1,51 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: url('https://i.postimg.cc/SSLPqxyF/back4.jpg') center center fixed; /* Reemplaza 'URL_DEL_FONDO' con la URL de tu imagen de fondo */
+    background-size: cover;
+}
+
+header {
+    background-color: #262626; /* Azul oscuro */
+    padding: 10px; /* Espaciado interno */
+    text-align: center;
+    color: #ff4d4d; /* Rojo palo */
+}
+
+header img {
+    max-width: auto; /* Ajusta el tamaño máximo de la imagen */
+    height: 150px;
+    margin-bottom: 10px; /* Espaciado inferior de la imagen */
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #ff4d4d; /* Rojo palo */
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background-color: #ff3333; /* Rojo más oscuro */
+}
+
+button:active {
+    background-color: #cc0000; /* Rojo más oscuro aún */
+}

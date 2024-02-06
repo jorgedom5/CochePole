@@ -1,14 +1,3 @@
-"""
-ESTE 
-CÓDIGO
-AÚN
-ESTÁ
-EN
-CONSTRUCCIÓN,
-GRACIAS
-
-"""
-
 import pandas as pd
 import os
 from google.cloud import pubsub_v1
