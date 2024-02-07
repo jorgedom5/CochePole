@@ -92,7 +92,8 @@ def insert_into_pubsub(pubsub_class, df):
         vehicle_payload = {
             "viaje_id": int(row["viaje_id"]),
             "vehicle_id": int(row["vehicle_id"]),
-            "location": str((row['latitud'], row['longitud'])),
+            "latitud": float(row["latitud"]),
+            "longitud": float(row["longitud"]),
             "num_plazas": int(row["num_plazas"]) 
         }
         
