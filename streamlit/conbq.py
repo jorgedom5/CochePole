@@ -4,15 +4,11 @@ import folium
 from streamlit_folium import folium_static
 from google.cloud import bigquery
 
-
-
-
 # Especifica la ruta del archivo JSON de las credenciales
 credenciales = "/Users/balmagostr/Documents/GitHub/CochePole/streamlit/credenciales.json"
 
 # Carga las credenciales
 client = bigquery.Client.from_service_account_json(credenciales)
-
 
 # Consulta SQL para obtener datos de BigQuery
 query = """
@@ -52,5 +48,20 @@ folium.Marker(location=final, icon=folium.Icon(color="red"), popup="Final").add_
 intermediate_points = selected_data.iloc[1:-1][["latitud", "longitud"]].values.tolist()
 folium.PolyLine(locations=intermediate_points, color='blue', weight=2).add_to(m)
 
-# Mostrar el mapa con Streamlit
-folium_static(m)
+# Definir el icono personalizado para representar el coche
+icono_coche = folium.CustomIcon(icon_image="https://image.flaticon.com/icons/png/512/2990/2990506.png", icon_size=(32, 32))
+
+# Iterar sobre los puntos intermedios de la ruta y simular el movimiento del coche
+for i, point in enumerate(intermediate_points):
+    # Agregar marcador del coche en la ubicación actual
+    folium.Marker(location=point, icon=icono_coche).add_to(m)
+    
+    # Obtener la ubicación de las personas
+    ubicacion_persona = [data.iloc[i]["latitud"], data.iloc[i]["longitud"]]
+    # Agregar marcador de la persona en la ubicación actual
+    folium.Marker(location=ubicacion_persona, icon=folium.Icon(color="orange"), popup=f"Persona {i+1}").add_to(m)
+    
+    # Mostrar el mapa con Streamlit
+    folium_static(m)
+    # Eliminar el marcador del coche actual para simular el movimiento
+    m = folium.Map(location=[point[0], point[1]], zoom_start=15)
