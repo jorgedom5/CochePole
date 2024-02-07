@@ -36,12 +36,8 @@ def viaje_cliente():
 
         query = f"""
                 SELECT
-                    viaje_id,
-                    punto_ruta,
                     latitud,
                     longitud,
-                    altura,
-                    distancia
                 FROM
                     `{dataset_id}.{table_id}`
                 ORDER BY
@@ -51,10 +47,6 @@ def viaje_cliente():
         df_users = client.query(query).to_dataframe()
 
         df_users['usuario_id'] = random.randint(1, 100000)
-
-        for index, row in df_users.iterrows():
-            print(f"Usuario ID: {row['usuario_id']},Viaje ID: {row['viaje_id']},Punto_ruta: {row['punto_ruta']}, Latitud: {row['latitud']}, Longitud: {row['longitud']}, Altura: {row['altura']}, Distancia: {row['distancia']}")
-        
         return df_users
 
     except Exception as e:
@@ -81,9 +73,8 @@ class PubSubMessages:
         for index, row in df_users.iterrows():
             user_payload = {
                 "usuario_id": int(row["usuario_id"]),
-                "viaje_id": int(row["viaje_id"]),
-                "location": str((row['latitud'], row['longitud'])),
-                "Distancia": int(row['distancia'])
+                "latitud": float(row["latitud"]),
+                "longitud": float(row["longitud"]),
             }
             pubsub_class.publishMessages(user_payload)
             time.sleep(1)
@@ -100,6 +91,7 @@ def main():
     finally:
         pubsub_class.__exit__()
         logging.info("Cerrando el script de forma ordenada (si es necesario).")
+
 
 if __name__ == "__main__":
     main()
