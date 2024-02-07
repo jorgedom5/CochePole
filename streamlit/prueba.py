@@ -2,11 +2,21 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import folium_static
+from google.cloud import bigquery
 
-# Leer el archivo CSV
+
+client = bigquery.Client(project='dataproject-2-413010')
+
+# Consulta SQL para obtener datos de BigQuery
+query = """
+SELECT *
+FROM dataproject-2-413010.BBDD.tabla_viajes_1
+"""
+
+# Obtener los datos de BigQuery
 @st.cache
 def load_data():
-    return pd.read_csv("/Users/balmagostr/Documents/GitHub/CochePole/streamlit/rutas.csv", decimal=",")
+    return client.query(query).to_dataframe()
 
 data = load_data()
 

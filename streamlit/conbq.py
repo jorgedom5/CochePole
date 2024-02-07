@@ -4,11 +4,7 @@ import folium
 from streamlit_folium import folium_static
 from google.cloud import bigquery
 
-# Especifica la ruta del archivo JSON de las credenciales
-credenciales = "/Users/balmagostr/Documents/GitHub/CochePole/streamlit/credenciales.json"
-
-# Carga las credenciales
-client = bigquery.Client.from_service_account_json(credenciales)
+client = bigquery.Client(project='dataproject-2-413010')
 
 # Consulta SQL para obtener datos de BigQuery
 query = """
