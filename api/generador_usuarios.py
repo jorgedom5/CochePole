@@ -36,6 +36,7 @@ def viaje_cliente():
 
         query = f"""
                 SELECT
+                    viaje_id,
                     latitud,
                     longitud,
                 FROM
@@ -73,6 +74,7 @@ class PubSubMessages:
         for index, row in df_users.iterrows():
             user_payload = {
                 "usuario_id": int(row["usuario_id"]),
+                "viaje_id": int(row["viaje_id"]),
                 "latitud": float(row["latitud"]),
                 "longitud": float(row["longitud"]),
             }
