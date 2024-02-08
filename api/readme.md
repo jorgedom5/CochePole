@@ -7,8 +7,9 @@ Para que funcione:
 ```powershell
 python3 generator_vehicle.py `
     --project_id "dataproject-2-413010" `
-    --topic_name "topic_dp2"
+    --topic_name "dp2_viajes"
 ```
+
 ```powershell
 python3 generador_usuarios.py `
     --project_id "dataproject-2-413010" `
