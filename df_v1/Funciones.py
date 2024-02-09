@@ -60,5 +60,5 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
                     
                      # Iniciar el viaje con el usuario y generar el resultado
                     vehicle_obj.start_journey_with(cliente_obj.cliente_id)
-                    yield {'user_id': cliente_obj.cliente_id, 'vehicle_id': vehicle_obj.vehicle_id, 'latitud':vehicle_obj.latitud, 'longitud':vehicle_obj.longitud}
+                    yield {'user_id': cliente_obj.cliente_id, 'vehicle_id': vehicle_obj.vehicle_id, 'viaje_id': vehicle_obj.viaje_id, 'latitud':vehicle_obj.latitud, 'longitud':vehicle_obj.longitud}
                     break # Romper el bucle interno una vez que se encuentra una coincidencia para que no busque mas clientes
