@@ -2,13 +2,19 @@ import apache_beam as beam
 from Funciones import MatchVehiclesAndUsersDoFn
 import json
 import logging
+from apache_beam.options.pipeline_options import PipelineOptions
+from apache_beam.io.gcp.pubsub import ReadFromPubSub
+from apache_beam.io.gcp.bigquery import WriteToBigQuery
+from apache_beam.transforms.window import FixedWindows
 
 # Variables
 project_id = "dataproject-2-413010"
-subscription_name = "sub_dp2"
-topic_name= "topic_dp2"
+subscription_name_viajes = "dp2_viajes-sub"
+subscription_name_clientes = "dp2_clientes-sub"
+topic_name_viajes = "dp2_viajes"
+topic_name_clientes = "dp2_clientes"
 bq_dataset = "BBDD"
-bq_table = "test3"
+bq_table = "pipeline_test1"
 bucket_name = "test-dp2"
 
 # Funcion para dar formato
@@ -25,17 +31,34 @@ def decode_message(msg):
 def run():
     with beam.Pipeline(options=PipelineOptions(
         streaming=True,
-        # save_main_session=True
         project=project_id,
-        runner="DataflowRunner",
-        temp_location=f"gs://{bucket_name}/tmp",
-        staging_location=f"gs://{bucket_name}/staging",
-        region="us-central1"
+        runner="DirectRunner"
     )) as p:
-        (
-
-            
+        vehicles = (
+            p | "ReadFromPubSubViajes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_viajes}')
+              | "DecodeViajes" >> beam.Map(decode_message)
+              | 'PairVehicles' >> beam.Map(lambda v: (v['viaje_id'], v))
+              #| "WindowViajes" >> beam.WindowInto(FixedWindows(10))  # 10 segundos de ventana
         )
+
+        users = (
+            p | "ReadFromPubSubClientes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_clientes}')
+              | "DecodeClientes" >> beam.Map(decode_message)
+              | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u))
+              #| "WindowClientes" >> beam.WindowInto(FixedWindows(10))  # 10 segundos de ventana
+        )
+        
+        vehicles_and_users = (
+            {'vehicles': vehicles, 'users': users} 
+            | 'CombineCollections' >> beam.CoGroupByKey()
+        )
+
+        matches = (
+            vehicles_and_users
+            | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
+            | 'PrintMatches' >> beam.Map(print)
+        )
+
 
 
 # def run():
@@ -58,12 +81,12 @@ def run():
 #                  | 'CreateUsers' >> beam.Create(users_data)
 #                  | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u)))
 
-#         vehicles_and_users = ({'vehicles': vehicles, 'users': users} 
-#                               | 'CombineCollections' >> beam.CoGroupByKey())
+        # vehicles_and_users = ({'vehicles': vehicles, 'users': users} 
+        #                       | 'CombineCollections' >> beam.CoGroupByKey())
 
-#         matches = (vehicles_and_users
-#                    | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
-#                    | 'PrintMatches' >> beam.Map(print))
+        # matches = (vehicles_and_users
+        #            | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
+        #            | 'PrintMatches' >> beam.Map(print))
 
 
 if __name__ == '__main__':
