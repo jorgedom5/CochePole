@@ -1,9 +1,7 @@
 ```bash
 ./
 ├── main.py                         # Archivo principal para ejecutar el pipeline de Beam
-├── decodificadorpubsub.py          # Utilidades para decodificar los datos del Pub/Sub
-├── matching_utilidad.py            # Logica para el emparejamiento de vehiculos y usuarios
-├── vehicle.py                      # Clase para manejar el estado del vehiculo
-└── client.py                       # Clase para manejar el estado del cliente
+├── Funciones.py                    # Contiene funcionalidades tanto auxiliares como de transoformacion de Apache Beam
+├── Classes.py                      # Contiene las definiciones de las clases "vehicle" y "cliente
 ```
 
