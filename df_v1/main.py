@@ -1,6 +1,8 @@
 import apache_beam as beam
 from beam_pipeline import MatchVehiclesAndUsersDoFn
 
+
+
 def run():
     vehicles_data = [
         {"vehicle_id": 125, "viaje_id": 23, "latitud": 39.46829, "longitud": -0.36069, "num_plazas": 2},
