@@ -90,7 +90,7 @@ def insert_into_pubsub(pubsub_class, df):
         
         # Obtener las coordenadas del punto de ruta actual
         vehicle_payload = {
-            "viaje_id": int(row["viaje_id"]),
+            "viaje_id": 4,
             "vehicle_id": int(row["vehicle_id"]),
             "latitud": float(row["latitud"]),
             "longitud": float(row["longitud"]),
