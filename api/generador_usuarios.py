@@ -1,14 +1,13 @@
 import pandas as pd
-import os
 from google.cloud import pubsub_v1
-import threading
 import argparse
 import logging
 import random
-import string
 import json
 import time
 from google.cloud import bigquery
+from faker import Faker
+from concurrent.futures import ThreadPoolExecutor
 
 # Input arguments
 parser = argparse.ArgumentParser(description=('User Data Generator'))
@@ -24,34 +23,7 @@ parser.add_argument(
 
 args, opts = parser.parse_known_args()
 
-def viaje_cliente():
-    try:
-        client = bigquery.Client()
-
-        dataset_id = 'BBDD'
-        table_id = 'tabla_viajes_1'
-
-        table_ref = client.dataset(dataset_id).table(table_id)
-        table = client.get_table(table_ref)
-
-        query = f"""
-                SELECT
-                    viaje_id,
-                    latitud,
-                    longitud,
-                FROM
-                    `{dataset_id}.{table_id}`
-                ORDER BY
-                    RAND()
-                LIMIT 1
-            """
-        df_users = client.query(query).to_dataframe()
-
-        df_users['cliente_id'] = random.randint(1, 10000)
-        return df_users
-
-    except Exception as e:
-        logging.error(f"Error al obtener viaje aleatorio: {str(e)}")
+fake = Faker()
 
 class PubSubMessages:
     def __init__(self, project_id: str, topic_name: str):
@@ -71,29 +43,65 @@ class PubSubMessages:
         logging.info("PubSub Client closed.")
     
     def insert_into_pubsub(self, pubsub_class, df_users):
-        for index, row in df_users.iterrows():
-            user_payload = {
-                "cliente_id": int(row["cliente_id"]),
-                "viaje_id": int(row["viaje_id"]),
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(pubsub_class.publishMessages, {
+                "cliente_id": row["cliente_id"],
+                "viaje_id": row["viaje_id"],
                 "latitud": float(row["latitud"]),
                 "longitud": float(row["longitud"]),
-            }
-            pubsub_class.publishMessages(user_payload)
-            time.sleep(1)
+            }) for _, row in df_users.iterrows()]
+
+            for future in futures:
+                future.result()
+
+def viaje_cliente(prev_users):
+    try:
+        client = bigquery.Client()
+
+        dataset_id = 'BBDD'
+        table_id = 'tabla_viajes_1'
+
+        table_ref = client.dataset(dataset_id).table(table_id)
+        table = client.get_table(table_ref)
+
+        query = f"""
+                SELECT
+                    viaje_id,
+                    latitud,
+                    longitud,
+                FROM
+                    `{dataset_id}.{table_id}`
+                ORDER BY
+                    RAND()
+                LIMIT 5
+                """
+        df_users = client.query(query).to_dataframe()
+
+        # Agregar nuevos usuarios y viajes a los anteriores
+        df_users["cliente_id"] = [fake.unique.random_int(1, 1000000) for _ in range(len(df_users))]
+        df_users = pd.concat([prev_users, df_users], ignore_index=True)
+
+        return df_users
+
+    except Exception as e:
+        logging.error(f"Error al obtener viaje aleatorio: {str(e)}")
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
+    prev_users = pd.DataFrame(columns=["cliente_id", "viaje_id", "latitud", "longitud"])
+
     try:
         while True:
-            df_users = viaje_cliente()
+            df_users = viaje_cliente(prev_users)
             pubsub_class.insert_into_pubsub(pubsub_class, df_users)
-            time.sleep(1)
+            prev_users = df_users  # Actualizar usuarios anteriores
+            time.sleep(0.01)  
     except KeyboardInterrupt:
         logging.info("Script interrumpido por el usuario.")
     finally:
         pubsub_class.__exit__()
         logging.info("Cerrando el script de forma ordenada (si es necesario).")
 
-
 if __name__ == "__main__":
     main()
+    
