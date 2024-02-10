@@ -16,7 +16,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 # Función para verificar si la ubicación del usuario está dentro del rango de la ruta del vehículo, depende de "calculate_distance"
 def is_within_route(user_location, vehicle_route):
     for point in vehicle_route:
-        if calculate_distance(*user_location, *point) <= 1:  # Dentro de 1 km
+        if calculate_distance(*user_location, *point) <= 0.35:  # Dentro de 0,35 km, lo que es lo mismo a unos 3 mins andando.
             return True
     return False
 
