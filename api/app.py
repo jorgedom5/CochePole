@@ -15,14 +15,14 @@ def index():
 
 @app.route('/generate_vehicle_data', methods=['POST'])
 def generate_vehicle_data():
-    commands = [['python3', 'generator_vehicle.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_viajes']] * 10
+    commands = [['python3', 'generator_vehicle.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_viajes']] * 1
     with executor as e:
         e.map(run_process, commands)
     return jsonify({"status": "success", "message": "Generating Vehicles."})
 
 @app.route('/generate_user_data', methods=['POST'])
 def generate_user_data():
-    commands = [['python3', 'generador_usuarios.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_clientes']] * 10
+    commands = [['python3', 'generador_usuarios.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_clientes']] * 1
     with executor as e:
         e.map(run_process, commands)
     return jsonify({"status": "success", "message": "Generating Users."})

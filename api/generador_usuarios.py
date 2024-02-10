@@ -47,7 +47,7 @@ def viaje_cliente():
             """
         df_users = client.query(query).to_dataframe()
 
-        df_users['usuario_id'] = random.randint(1, 100000)
+        df_users['cliente_id'] = random.randint(1, 100000)
         return df_users
 
     except Exception as e:
@@ -63,7 +63,7 @@ class PubSubMessages:
         json_str = json.dumps(message)
         topic_path = self.publisher.topic_path(self.project_id, self.topic_name)
         self.publisher.publish(topic_path, json_str.encode("utf-8"))
-        logging.info("New user needs a ride. Id: %s", message['usuario_id'])
+        logging.info("New user needs a ride. Id: %s", message['cliente_id'])
         print(f"Published message: {json_str}")
 
     def __exit__(self):
@@ -73,13 +73,12 @@ class PubSubMessages:
     def insert_into_pubsub(self, pubsub_class, df_users):
         for index, row in df_users.iterrows():
             user_payload = {
-                "usuario_id": int(row["usuario_id"]),
+                "cliente_id": int(row["cliente_id"]),
                 "viaje_id": int(row["viaje_id"]),
                 "latitud": float(row["latitud"]),
                 "longitud": float(row["longitud"]),
             }
             pubsub_class.publishMessages(user_payload)
-            time.sleep(1)
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
@@ -87,7 +86,8 @@ def main():
         while True:
             df_users = viaje_cliente()
             pubsub_class.insert_into_pubsub(pubsub_class, df_users)
-            time.sleep(1)
+            time.sleep(0.5)
+
     except KeyboardInterrupt:
         logging.info("Script interrumpido por el usuario.")
     finally:
