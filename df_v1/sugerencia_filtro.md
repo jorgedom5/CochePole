@@ -1,4 +1,4 @@
-# SUGERENCIA FILTRAR CLIENTES YA SUBIDOS
+# SUGERENCIA FILTRAR CLIENTES YA SUBIDOS, Y NÚMERO DE PLAZAS
 
 ## EN Funciones.py
 
@@ -58,4 +58,30 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
                     break  # Romper el bucle interno una vez que se encuentra una coincidencia para que no busque más clientes
             else:
                 print(f"No hay clientes para el vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id}")
+```
+
+## PARA LOS NUMERO DE PLAZAS (No estoy seguro de esta parte, es un primer boceto)
+
+Modifica esta parte del código, donde se añade la variable num_plazas a partir del vehicle
+
+```python
+if (vehicle_obj.is_available and
+                        vehicle_obj.viaje_id == cliente_obj.viaje_id and
+                        is_within_route(user_location, [vehicle_location]) and
+                        plazas_restantes > 0):  # Verificar si hay plazas disponibles
+                    # Iniciar el viaje con el usuario y generar el resultado
+                    vehicle_obj.start_journey_with(cliente_obj.cliente_id)
+                    clientes_emparejados.append(cliente_obj.cliente_id)  # Agregar cliente emparejado a la lista
+                    plazas_restantes -= 1  # Restar una plaza al vehículo
+
+                    yield {'user_id': cliente_obj.cliente_id, 'vehicle_id': vehicle_obj.vehicle_id,
+                           'viaje_id': vehicle_obj.viaje_id, 'latitud': vehicle_obj.latitud,
+                           'longitud': vehicle_obj.longitud}
+                # ASÍ MIENTRAS HAYAN PLAZAS
+            else:
+                if plazas_restantes == vehicle_obj.num_plazas:
+                    print(f"No hay clientes para el vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id}")
+                else:
+                    print(f"No hay más plazas disponibles en el vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id}. Quedan {plazas_restantes} plazas.")
+
 ```
