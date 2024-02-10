@@ -8,9 +8,7 @@
     <link rel="stylesheet" href="../static/styles.css" async>
 </head>
 
-<body>
-    <audio id="backgroundMusic" src="../static/f1.mp3" autoplay loop></audio>
-    
+<body>    
     <header>
         <img src="https://i.postimg.cc/hjrzPdG5/logo-blabla.png" alt="BLABLACAR Logo">
         <h1>BlaBlaCar Demo API</h1>
@@ -22,11 +20,6 @@
     </div>
 
     <script>
-        // Función para reproducir la música al cargar la página
-        window.onload = function() {
-            var backgroundMusic = document.getElementById('backgroundMusic');
-            backgroundMusic.play();
-        };
 
         function generateVehicleData() {
             fetch('/generate_vehicle_data', { method: 'POST' })
