@@ -61,4 +61,7 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
                      # Iniciar el viaje con el usuario y generar el resultado
                     vehicle_obj.start_journey_with(cliente_obj.cliente_id)
                     yield {'user_id': cliente_obj.cliente_id, 'vehicle_id': vehicle_obj.vehicle_id, 'viaje_id': vehicle_obj.viaje_id, 'latitud':vehicle_obj.latitud, 'longitud':vehicle_obj.longitud}
-                    break # Romper el bucle interno una vez que se encuentra una coincidencia para que no busque mas clientes
+                    break # Romper el bucle interno una vez que se encuentra una coincidencia para que no busque más clientes
+            else:
+                print(f"No hay clientes para el vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id}")
+                    
