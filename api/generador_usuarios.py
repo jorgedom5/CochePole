@@ -86,7 +86,7 @@ def main():
         while True:
             df_users = viaje_cliente()
             pubsub_class.insert_into_pubsub(pubsub_class, df_users)
-            time.sleep(0.5)
+            time.sleep(0.25)
 
     except KeyboardInterrupt:
         logging.info("Script interrumpido por el usuario.")
