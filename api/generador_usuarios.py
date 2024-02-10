@@ -74,7 +74,7 @@ class PubSubMessages:
         for index, row in df_users.iterrows():
             user_payload = {
                 "cliente_id": int(row["cliente_id"]),
-                "viaje_id": int(row["viaje_id"]),
+                "viaje_id": 4,
                 "latitud": float(row["latitud"]),
                 "longitud": float(row["longitud"]),
             }
