@@ -45,7 +45,7 @@ class PubSubMessages:
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(pubsub_class.publishMessages, {
                 "cliente_id": row["cliente_id"],
-                "viaje_id": row["viaje_id"],
+                "viaje_id": int(row["viaje_id"]),
                 "latitud": float(row["latitud"]) + fake.random.uniform(-0.001, 0.001),
                 "longitud": float(row["longitud"]) + fake.random.uniform(-0.001, 0.001),
             }) for _, row in df_users.iterrows()]
@@ -53,7 +53,7 @@ class PubSubMessages:
             for future in futures:
                 future.result()
 
-def obtener_datos_iniciales(cliente_ids):
+def obtener_datos_iniciales(cliente_ids, viaje_ids):
     client = bigquery.Client()
 
     dataset_id = 'BBDD'
@@ -72,16 +72,22 @@ def obtener_datos_iniciales(cliente_ids):
             """
     df = client.query(query).to_dataframe()
 
+    # CAMBIOS
     df["cliente_id"] = cliente_ids
+    df["viaje_id"] = viaje_ids
+
     return df
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
-    cliente_ids = [fake.unique.random_int(1, 1000000) for _ in range(5)]
+    
+    # CAMBIOS
+    cliente_ids = [fake.unique.random_int(1, 100000) for _ in range(5)]
+    viaje_ids = [fake.unique.random_int(1, 38) for _ in range(5)]
 
     try:
         while True:
-            df_users = obtener_datos_iniciales(cliente_ids)
+            df_users = obtener_datos_iniciales(cliente_ids, viaje_ids)
             pubsub_class.insert_into_pubsub(pubsub_class, df_users)
             time.sleep(1)  
     except KeyboardInterrupt:
