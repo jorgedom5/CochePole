@@ -78,6 +78,7 @@ def insert_into_pubsub(pubsub_class, df):
 
     latitud_final = float(trip_rows['latitud'].max())
     longitud_final = float(trip_rows['longitud'].max())
+    last_coordinates_row = trip_rows.loc[trip_rows['punto_ruta'].idxmax()]
 
     for index, row in trip_rows.iterrows():
         # Obtener las coordenadas del punto de ruta actual
@@ -87,12 +88,12 @@ def insert_into_pubsub(pubsub_class, df):
             "latitud": float(row["latitud"]),
             "longitud": float(row["longitud"]),
             "num_plazas": int(row["num_plazas"]),
-            "latitud_final": float(latitud_final),
-            "longitud_final": float(longitud_final)
+            "latitud_final": float(last_coordinates_row["latitud"]),
+            "longitud_final": float(last_coordinates_row["longitud"])
         }
 
         pubsub_class.publishMessages(vehicle_payload)
-        time.sleep(10)
+        time.sleep(0.1)
 
 
 def main():
