@@ -93,7 +93,7 @@ def insert_into_pubsub(pubsub_class, df):
         }
 
         pubsub_class.publishMessages(vehicle_payload)
-        time.sleep(0.1)
+        time.sleep(10)
 
 
 def main():
