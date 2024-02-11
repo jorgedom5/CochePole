@@ -1,6 +1,7 @@
 import apache_beam as beam
 from Classes import Vehicle, Cliente
 import math
+import datetime as datetime
 
 # Función para calcular la distancia
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -16,7 +17,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 # Función para verificar si la ubicación del usuario está dentro del rango de la ruta del vehículo, depende de "calculate_distance"
 def is_within_route(user_location, vehicle_route):
     for point in vehicle_route:
-        if calculate_distance(*user_location, *point) <= 20:  # Dentro de 20 metros, lo que es lo mismo a unos 3 mins andando.
+        if calculate_distance(*user_location, *point) <= 2000:  # Dentro de 20 metros, lo que es lo mismo a unos 3 mins andando.
             return True
     return False
 
@@ -31,9 +32,6 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
         # Registro de usuarios asignados
 
         clientes_emparejados = set()
-
-
-
 
         # Iterar sobre cada vehículo en la lista de vehículos
         for vehicle in vehicles:
@@ -70,7 +68,11 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
                     is_within_route(user_location, [vehicle_location])):
 
                     vehicle_obj.start_journey_with(cliente_obj.cliente_id)
-                    yield {'user_id': cliente_obj.cliente_id, 'vehicle_id': vehicle_obj.vehicle_id, 'viaje_id': vehicle_obj.viaje_id, 'latitud':vehicle_obj.latitud, 'longitud':vehicle_obj.longitud}
+                    clientes_emparejados.add(cliente_obj.cliente_id)
+
+                    # Obtener el timestamp para agregar al output
+                    timestamp= datetime.now()
+                    yield {'user_id': cliente_obj.cliente_id, 'vehicle_id': vehicle_obj.vehicle_id, 'viaje_id': vehicle_obj.viaje_id, 'latitud':vehicle_obj.latitud, 'longitud':vehicle_obj.longitud, 'timestamp': timestamp.isoformat()}
 
             if not vehicle_obj.is_available():
                 print(f"Vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id} está lleno.")

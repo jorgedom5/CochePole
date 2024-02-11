@@ -17,15 +17,6 @@ bq_dataset = "BBDD"
 bq_table = "pipeline_test1"
 bucket_name = "test-dp2"
 
-# Funcion para dar formato
-
-# def decode_message(msg):
-
-#     output = msg.decode('utf-8')
-
-#     logging.info("New PubSub Message: %s", output)
-
-#     return json.loads(output)
 
 def decode_json(element):
     return json.loads(element)
@@ -51,7 +42,31 @@ def run():
               | "WindowClientes" >> beam.WindowInto(FixedWindows(10))  # 10 segundos de ventana
               | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u))             
         )
+
+
+        # # Combinación de colecciones de vehículos y usuarios y procesamiento de emparejamientos
+        # vehicles_and_users = (
+        #     {'vehicles': vehicles, 'users': users} 
+        #     | 'CombineCollections' >> beam.CoGroupByKey()
+        #     | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
+        # )
         
+        # # Separación de los eventos de emparejamiento
+        # emparejamientos = (
+        #     vehicles_and_users
+        #     | 'FiltrarEmparejamientos' >> beam.Filter(lambda x: 'user_id' in x)
+        #     | 'PrintEmparejamientos' >> beam.Map(print)
+        # )
+
+        # # Separación de los eventos de finalización de viaje
+        # finalizaciones = (
+        #     vehicles_and_users
+        #     | 'FiltrarFinalizaciones' >> beam.Filter(lambda x: 'viaje_finalizado' in x)
+        #     | 'PrintFinalizaciones' >> beam.Map(print)
+        # )
+
+
+
         # Combinacion de las coleciones de vehiculos y usuarios
         vehicles_and_users = (
             {'vehicles': vehicles, 'users': users} 
@@ -67,32 +82,6 @@ def run():
 
 
 
-# def run():
-#     vehicles_data = [
-#         {"vehicle_id": 125, "viaje_id": 23, "latitud": 39.46829, "longitud": -0.36069, "num_plazas": 2},
-#         {"vehicle_id": 126, "viaje_id": 24, "latitud": 39.46830, "longitud": -0.36068, "num_plazas": 2}
-#     ]
-#     users_data = [
-#         {"cliente_id": 33, "viaje_id": 245, "latitud": 39.46827, "longitud": -0.36069},
-#         {"cliente_id": 34, "viaje_id": 24, "latitud": 39.46830, "longitud": -0.36068}
-#     ]
-
-#     # Definición del pipeline
-#     with beam.Pipeline() as p:
-#         # Datos de ejemplo
-#         vehicles = (p
-#                     | 'CreateVehicles' >> beam.Create(vehicles_data)
-#                     | 'PairVehicles' >> beam.Map(lambda v: (v['viaje_id'], v)))
-#         users = (p
-#                  | 'CreateUsers' >> beam.Create(users_data)
-#                  | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u)))
-
-#         vehicles_and_users = ({'vehicles': vehicles, 'users': users} 
-#                               | 'CombineCollections' >> beam.CoGroupByKey())
-
-#         matches = (vehicles_and_users
-#                    | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
-#                    | 'PrintMatches' >> beam.Map(print))
 
 
 if __name__ == '__main__':
