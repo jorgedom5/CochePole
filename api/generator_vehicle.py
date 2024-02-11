@@ -1,18 +1,14 @@
 import pandas as pd
-import os
 from google.cloud import pubsub_v1
-import threading
 import argparse
 import logging
 import secrets
 import random
-import string
 import json
 import time
 from google.cloud import bigquery
 
-
-#Input arguments
+# Input arguments
 parser = argparse.ArgumentParser(description=('Vehicle Data Generator'))
 
 parser.add_argument(
@@ -27,23 +23,17 @@ parser.add_argument(
 args, opts = parser.parse_known_args()
 
 
-from google.cloud import bigquery
-
+# Google BigQuery Configuration
 client = bigquery.Client()
-
 dataset_id = 'BBDD'
 table_id = 'tabla_viajes_1'
 
 table_ref = client.dataset(dataset_id).table(table_id)
 table = client.get_table(table_ref)
 
-
 query = f"SELECT * FROM `{table.project}.{table.dataset_id}.{table.table_id}`"
 df = client.query(query).to_dataframe()
 
-
-
-""" Helpful Code """
 
 class PubSubMessages:
 
@@ -71,41 +61,45 @@ def asignar_vehiculos_a_viaje(df):
         vehiculo_id = random.randint(1, 1000)
         num_plazas = random.randint(1, 4)
 
-
         df.loc[df['viaje_id'] == viaje_id, 'vehicle_id'] = vehiculo_id
         df.loc[df['viaje_id'] == viaje_id, 'num_plazas'] = num_plazas
 
+
 def insert_into_pubsub(pubsub_class, df):
     viaje_id_random = random.randint(1, 38)  # VIAJE ALEATORIO
-    
+
     print(f"viaje_id: {viaje_id_random}")
-    
+
     trip_rows = df[df['viaje_id'] == viaje_id_random]
-    
+
     if trip_rows.empty:
         print("Error viaje_id.")
         return
-        
+
+    latitud_final = float(trip_rows['latitud'].max())
+    longitud_final = float(trip_rows['longitud'].max())
+
     for index, row in trip_rows.iterrows():
-        
         # Obtener las coordenadas del punto de ruta actual
         vehicle_payload = {
             "viaje_id": int(row["viaje_id"]),
             "vehicle_id": int(row["vehicle_id"]),
             "latitud": float(row["latitud"]),
             "longitud": float(row["longitud"]),
-            "num_plazas": int(row["num_plazas"]) 
+            "num_plazas": int(row["num_plazas"]),
+            "latitud_final": float(latitud_final),
+            "longitud_final": float(longitud_final)
         }
-        
+
         pubsub_class.publishMessages(vehicle_payload)
         time.sleep(10)
 
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
-    
+
     asignar_vehiculos_a_viaje(df)
-    
+
     insert_into_pubsub(pubsub_class, df)
 
 if __name__ == "__main__":
