@@ -9,7 +9,7 @@ def generate_vehicle_data_once():
     process.wait()
 
 def generate_user_data_once():
-    process = Popen(['python3', 'generador_usuarios.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_clientes'])
+    process = Popen(['python3', 'generador_usuarios2.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_clientes'])
     process.wait()
 
 @app.route('/')
@@ -35,4 +35,4 @@ def generate_user_data():
     return jsonify({"status": "success", "message": f"Generating Users {num_generations_u} times in parallel."})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
