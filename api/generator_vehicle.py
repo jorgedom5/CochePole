@@ -92,10 +92,10 @@ def insert_into_pubsub(pubsub_class, df):
             }
 
             pubsub_class.publishMessages(vehicle_payload)
-            time.sleep(10)
+            time.sleep(1)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        viaje_ids_random = [random.randint(1, 38) for _ in range(20)]  # NUMERO DE COCHES A LA VEZ
+        viaje_ids_random = [random.randint(1, 38) for _ in range(1)]  # NUMERO DE COCHES A LA VEZ
         futures = [executor.submit(process_trip, viaje_id) for viaje_id in viaje_ids_random]
 
         concurrent.futures.wait(futures)
