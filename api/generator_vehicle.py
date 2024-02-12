@@ -7,6 +7,7 @@ import random
 import json
 import time
 from google.cloud import bigquery
+import concurrent.futures
 
 # Input arguments
 parser = argparse.ArgumentParser(description=('Vehicle Data Generator'))
@@ -66,35 +67,38 @@ def asignar_vehiculos_a_viaje(df):
 
 
 def insert_into_pubsub(pubsub_class, df):
-    viaje_id_random = random.randint(1, 38)  # VIAJE ALEATORIO
+    def process_trip(viaje_id_random):
 
-    print(f"viaje_id: {viaje_id_random}")
+        trip_rows = df[df['viaje_id'] == viaje_id_random]
 
-    trip_rows = df[df['viaje_id'] == viaje_id_random]
+        if trip_rows.empty:
+            print("Error viaje_id.")
+            return
 
-    if trip_rows.empty:
-        print("Error viaje_id.")
-        return
+        latitud_final = float(trip_rows['latitud'].max())
+        longitud_final = float(trip_rows['longitud'].max())
+        last_coordinates_row = trip_rows.loc[trip_rows['punto_ruta'].idxmax()]
 
-    latitud_final = float(trip_rows['latitud'].max())
-    longitud_final = float(trip_rows['longitud'].max())
-    last_coordinates_row = trip_rows.loc[trip_rows['punto_ruta'].idxmax()]
+        for index, row in trip_rows.iterrows():
+            # Obtener las coordenadas del punto de ruta actual
+            vehicle_payload = {
+                "viaje_id": int(row["viaje_id"]),
+                "vehicle_id": int(row["vehicle_id"]),
+                "latitud": float(row["latitud"]),
+                "longitud": float(row["longitud"]),
+                "num_plazas": int(row["num_plazas"]),
+                "latitud_final": float(last_coordinates_row["latitud"]),
+                "longitud_final": float(last_coordinates_row["longitud"])
+            }
 
-    for index, row in trip_rows.iterrows():
-        # Obtener las coordenadas del punto de ruta actual
-        vehicle_payload = {
-            "viaje_id": int(row["viaje_id"]),
-            "vehicle_id": int(row["vehicle_id"]),
-            "latitud": float(row["latitud"]),
-            "longitud": float(row["longitud"]),
-            "num_plazas": int(row["num_plazas"]),
-            "latitud_final": float(last_coordinates_row["latitud"]),
-            "longitud_final": float(last_coordinates_row["longitud"])
-        }
+            pubsub_class.publishMessages(vehicle_payload)
+            time.sleep(10)
 
-        pubsub_class.publishMessages(vehicle_payload)
-        time.sleep(10)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        viaje_ids_random = [random.randint(1, 38) for _ in range(20)]  # NUMERO DE COCHES A LA VEZ
+        futures = [executor.submit(process_trip, viaje_id) for viaje_id in viaje_ids_random]
 
+        concurrent.futures.wait(futures)
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
