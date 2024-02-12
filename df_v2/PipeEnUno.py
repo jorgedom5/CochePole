@@ -7,6 +7,7 @@ from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.io.gcp.pubsub import ReadFromPubSub
 from apache_beam.io.gcp.bigquery import WriteToBigQuery
 from apache_beam.transforms.window import FixedWindows
+from geopy.distance import geodesic
 
 
 # Clases Vehicle y Cliente
@@ -62,19 +63,20 @@ class Cliente:
 
 # Función para calcular la distancia
 def calculate_distance(lat1, lon1, lat2, lon2):
-    R = 6371  # Radio de la Tierra en kilómetros
-    dLat = math.radians(lat2 - lat1)
-    dLon = math.radians(lon2 - lon1)
-    a = (math.sin(dLat/2) * math.sin(dLat/2) +
-         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-         math.sin(dLon/2) * math.sin(dLon/2))
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    return R * c  # Multiplicar por 1000 para convertir a metros
+    # Coordenadas del primer punto
+    location1 = (lat1, lon1)
+
+    # Coordenadas del segundo punto
+    location2 = (lat2, lon2)
+
+    # Calcular la distancia geodésica
+    distance = geodesic(location1, location2).kilometers
+    return distance
 
 # Función para verificar si la ubicación del usuario está dentro del rango de la ruta del vehículo, depende de "calculate_distance"
 def is_within_route(user_location, vehicle_route):
     for point in vehicle_route:
-        if calculate_distance(*user_location, *point) <= 1:  # Dentro de 20 metros, lo que es lo mismo a unos 3 mins andando.
+        if calculate_distance(*user_location, *point) <= 20:  # Dentro de 20 metros, lo que es lo mismo a unos 3 mins andando.
             return True
     return False
 
@@ -133,8 +135,8 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
 
             if not vehicle_obj.is_available():
                 print(f"Vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id} está lleno.")
-            else:
-                print(f"No hay clientes para el vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id}")
+            # else:
+            #     print(f"No hay clientes para el vehículo con ID {vehicle_obj.vehicle_id} en el viaje con ID {viaje_id}")
 
 
 
@@ -159,7 +161,7 @@ def decode_json(message):
     # Convert string decoded in JSON format
     msg = json.loads(pubsub_message)
 
-    logging.info("New message in PubSub: %s", msg)
+    #logging.info("New message in PubSub: %s", msg)
 
     # Return function
     return msg
@@ -181,7 +183,7 @@ def run():
         vehicles = (
             p | "ReadFromPubSubViajes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_viajes}')
               | "DecodeVehicles" >> beam.Map(decode_json)
-              | "WindowViajes" >> beam.WindowInto(FixedWindows(5))  # 10 segundos de ventana
+              | "WindowViajes" >> beam.WindowInto(FixedWindows(1))  # 10 segundos de ventana
               | 'PairVehicles' >> beam.Map(lambda v: (v['viaje_id'], v))              
         )
         
@@ -189,7 +191,7 @@ def run():
         users = (
             p | "ReadFromPubSubClientes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_clientes}')
               | "DecodeClientes" >> beam.Map(decode_json)
-              | "WindowClientes" >> beam.WindowInto(FixedWindows(5))  # 10 segundos de ventana
+              | "WindowClientes" >> beam.WindowInto(FixedWindows(1))  # 10 segundos de ventana
               | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u))             
         )
 
