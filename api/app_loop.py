@@ -4,10 +4,12 @@ from subprocess import Popen
 
 app = Flask(__name__)
 
-executor = ThreadPoolExecutor()
+def generate_vehicle_data_once():
+    process = Popen(['python3', 'generator_vehicle.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_viajes'])
+    process.wait()
 
-def run_command(command):
-    process = Popen(command)
+def generate_user_data_once():
+    process = Popen(['python3', 'generador_usuarios.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_clientes'])
     process.wait()
 
 @app.route('/')
@@ -16,16 +18,21 @@ def index():
 
 @app.route('/generate_vehicle_data', methods=['POST'])
 def generate_vehicle_data():
-    for _ in range(3): # CAMBIAR PARA NUMERO DE ITERACIONES
-        executor.submit(run_command, ['python3', 'generator_vehicle.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_viajes'])
-    return jsonify({"status": "success", "message": "Generating Vehicles."})
+    num_generations_v = 20 
+
+    with ThreadPoolExecutor(max_workers=num_generations_v) as executor:
+        executor.map(lambda _: generate_vehicle_data_once(), range(num_generations_v))
+
+    return jsonify({"status": "success", "message": f"Generating Vehicles {num_generations_v} times in parallel."})
 
 @app.route('/generate_user_data', methods=['POST'])
 def generate_user_data():
-    for _ in range(3): # CAMBIAR PARA NUMERO DE ITERACIONES
-        executor.submit(run_command, ['python3', 'generador_usuarios.py', '--project_id', 'dataproject-2-413010', '--topic_name', 'dp2_clientes'])
-    return jsonify({"status": "success", "message": "Generating Users."})
+    num_generations_u = 20  
+
+    with ThreadPoolExecutor(max_workers=num_generations_u) as executor:
+        executor.map(lambda _: generate_user_data_once(), range(num_generations_u))
+
+    return jsonify({"status": "success", "message": f"Generating Users {num_generations_u} times in parallel."})
 
 if __name__ == '__main__':
-    app.run(debug=False)
-
+    app.run(debug=True)
