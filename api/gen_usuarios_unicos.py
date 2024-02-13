@@ -53,39 +53,43 @@ class PubSubMessages:
             for future in futures:
                 future.result()
 
-def obtener_datos_iniciales(cliente_ids):
+def obtener_datos_iniciales(cliente_ids, trip_ids):
     client = bigquery.Client()
 
     dataset_id = 'BBDD'
     table_id = 'tabla_viajes_1'
 
-    query = f"""
-            SELECT
-                viaje_id,
-                latitud,
-                longitud
-            FROM
-                `{dataset_id}.{table_id}`
-            WHERE
-                viaje_id = 1
-            LIMIT 5
-            """
-    df = client.query(query).to_dataframe()
+    data = []
+    for trip_id in trip_ids:
+        query = f"""
+                SELECT
+                    {trip_id} as viaje_id,
+                    latitud,
+                    longitud
+                FROM
+                    `{dataset_id}.{table_id}`
+                WHERE
+                    viaje_id = {trip_id}
+                LIMIT 1
+                """
+        df = client.query(query).to_dataframe()
 
-    # CAMBIOS
-    df["cliente_id"] = cliente_ids
+        # CAMBIOS
+        df["cliente_id"] = cliente_ids
+        data.append(df)
 
-    return df
+    return pd.concat(data, ignore_index=True)
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
     
     # CAMBIOS
-    cliente_ids = [fake.unique.random_int(1, 100000) for _ in range(5)]
+    cliente_ids = [fake.unique.random_int(1, 100000) for _ in range(1)]
+    trip_ids = [1, 2, 3]
 
     try:
         while True:
-            df_users = obtener_datos_iniciales(cliente_ids)
+            df_users = obtener_datos_iniciales(cliente_ids, trip_ids)
             pubsub_class.insert_into_pubsub(pubsub_class, df_users)
             time.sleep(1)  
     except KeyboardInterrupt:

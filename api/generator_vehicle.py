@@ -2,7 +2,6 @@ import pandas as pd
 from google.cloud import pubsub_v1
 import argparse
 import logging
-import secrets
 import random
 import json
 import time
@@ -21,10 +20,8 @@ parser.add_argument(
     required=True,
     help='PubSub topic name.')
 
-args, opts = parser.parse_known_args()
+args = parser.parse_args() 
 
-
-# Google BigQuery Configuration
 client = bigquery.Client()
 dataset_id = 'BBDD'
 table_id = 'tabla_viajes_1'
@@ -57,19 +54,16 @@ class PubSubMessages:
         logging.info("PubSub Client closed.")
 
 
-def asignar_vehiculos_a_viaje(df):
-    for viaje_id in df['viaje_id'].unique():
-        vehiculo_id = random.randint(1, 1000)
-        num_plazas = random.randint(1, 4)
-
-        df.loc[df['viaje_id'] == viaje_id, 'vehicle_id'] = vehiculo_id
-        df.loc[df['viaje_id'] == viaje_id, 'num_plazas'] = num_plazas
-
-
 def insert_into_pubsub(pubsub_class, df):
-    def process_trip(viaje_id_random):
+    def process_trip(viaje_id_random, df_copy):
+        for viaje_id in df_copy['viaje_id'].unique():
+            vehiculo_id = random.randint(1, 1000)
+            num_plazas = random.randint(1, 4)
 
-        trip_rows = df[df['viaje_id'] == viaje_id_random]
+            df_copy.loc[df_copy['viaje_id'] == viaje_id, 'vehicle_id'] = vehiculo_id
+            df_copy.loc[df_copy['viaje_id'] == viaje_id, 'num_plazas'] = num_plazas
+
+        trip_rows = df_copy[df_copy['viaje_id'] == viaje_id_random]
 
         if trip_rows.empty:
             print("Error viaje_id.")
@@ -80,7 +74,6 @@ def insert_into_pubsub(pubsub_class, df):
         last_coordinates_row = trip_rows.loc[trip_rows['punto_ruta'].idxmax()]
 
         for index, row in trip_rows.iterrows():
-            # Obtener las coordenadas del punto de ruta actual
             vehicle_payload = {
                 "viaje_id": int(row["viaje_id"]),
                 "vehicle_id": int(row["vehicle_id"]),
@@ -92,20 +85,22 @@ def insert_into_pubsub(pubsub_class, df):
             }
 
             pubsub_class.publishMessages(vehicle_payload)
-            time.sleep(1)
+            time.sleep(7)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        viaje_ids_random = [random.randint(1, 38) for _ in range(1)]  # NUMERO DE COCHES A LA VEZ
-        futures = [executor.submit(process_trip, viaje_id) for viaje_id in viaje_ids_random]
+        viaje_ids_random = [random.randint(1, 4) for _ in range(5)]  # NUMERO DE COCHES A LA VEZ
+        futures = [executor.submit(process_trip, viaje_id, df.copy()) for viaje_id in viaje_ids_random]
 
         concurrent.futures.wait(futures)
+
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
 
-    asignar_vehiculos_a_viaje(df)
+    # asignar_vehiculos_a_viaje(df)
 
     insert_into_pubsub(pubsub_class, df)
+
 
 if __name__ == "__main__":
     main()
