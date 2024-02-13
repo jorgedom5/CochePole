@@ -8,6 +8,7 @@ from apache_beam.io.gcp.pubsub import ReadFromPubSub
 from apache_beam.io.gcp.bigquery import WriteToBigQuery
 from apache_beam.transforms.window import FixedWindows
 from geopy.distance import geodesic
+from datetime import timedelta
 
 
 # Clases Vehicle y Cliente
@@ -161,7 +162,7 @@ def decode_json(message):
     # Convert string decoded in JSON format
     msg = json.loads(pubsub_message)
 
-    #logging.info("New message in PubSub: %s", msg)
+    # logging.info("New message in PubSub: %s", msg)
 
     # Return function
     return msg
@@ -178,12 +179,22 @@ def run():
         streaming=True,
         project=project_id,
         runner="DirectRunner"
+        
+        ########################CONFIG PARA ENVIAR A DATAFLOW###############################
+        # streaming=True,
+        # # save_main_session=True
+        # project=project_id,
+        # runner="DataflowRunner",
+        # temp_location=f"gs://{bucket_name}/tmp",
+        # staging_location=f"gs://{bucket_name}/staging",
+        # region="europe-west4"
+        #######################################################
     )) as p:
         # Lectura de mensajes de vehiculos desde PubSub
         vehicles = (
             p | "ReadFromPubSubViajes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_viajes}')
               | "DecodeVehicles" >> beam.Map(decode_json)
-              | "WindowViajes" >> beam.WindowInto(FixedWindows(1))  # 10 segundos de ventana
+              | "WindowViajes" >> beam.WindowInto(FixedWindows(7))  # 10 segundos de ventana
               | 'PairVehicles' >> beam.Map(lambda v: (v['viaje_id'], v))              
         )
         
@@ -191,7 +202,7 @@ def run():
         users = (
             p | "ReadFromPubSubClientes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_clientes}')
               | "DecodeClientes" >> beam.Map(decode_json)
-              | "WindowClientes" >> beam.WindowInto(FixedWindows(1))  # 10 segundos de ventana
+              | "WindowClientes" >> beam.WindowInto(FixedWindows(7))  # 10 segundos de ventana
               | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u))             
         )
 
