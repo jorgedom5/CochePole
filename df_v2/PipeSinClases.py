@@ -202,7 +202,12 @@ def run():
         matches = (
             vehicles_and_users
             | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
-            | 'PrintMatches' >> beam.Map(print)
+            | 'WriteToBigQuery' >> WriteToBigQuery(
+                table=f"{project_id}:{bq_dataset}.{bq_table}",
+                schema="user_id:INTEGER,vehicle_id:INTEGER,viaje_id:INTEGER,latitud:FLOAT,longitud:FLOAT,timestamp:TIMESTAMP",
+                create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+            )
         )
 
 
