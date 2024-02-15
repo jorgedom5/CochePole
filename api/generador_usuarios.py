@@ -2,7 +2,6 @@ import pandas as pd
 from google.cloud import pubsub_v1
 import argparse
 import logging
-import random
 import json
 import time
 from google.cloud import bigquery
@@ -26,76 +25,78 @@ args, opts = parser.parse_known_args()
 fake = Faker()
 
 class PubSubMessages:
+
+
     def __init__(self, project_id: str, topic_name: str):
         self.publisher = pubsub_v1.PublisherClient()
         self.project_id = project_id
         self.topic_name = topic_name
 
+
     def publishMessages(self, message: str):
         json_str = json.dumps(message)
         topic_path = self.publisher.topic_path(self.project_id, self.topic_name)
         self.publisher.publish(topic_path, json_str.encode("utf-8"))
-        logging.info("New user needs a ride. Id: %s", message['cliente_id'])
+        logging.info("Updating user position. Id: %s", message['cliente_id'])
         print(f"Published message: {json_str}")
+
 
     def __exit__(self):
         self.publisher.transport.close()
         logging.info("PubSub Client closed.")
     
+
     def insert_into_pubsub(self, pubsub_class, df_users):
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(pubsub_class.publishMessages, {
-                "cliente_id": row["cliente_id"],
-                "viaje_id": row["viaje_id"],
-                "latitud": float(row["latitud"]),
-                "longitud": float(row["longitud"]),
+                "cliente_id": int(row["cliente_id"]),
+                "viaje_id": int(row["viaje_id"]),
+                "latitud": float(row["latitud"]) + fake.random.uniform(0.001, 0.002),
+                "longitud": float(row["longitud"]) + fake.random.uniform(-0.001, -0.002),
             }) for _, row in df_users.iterrows()]
 
             for future in futures:
                 future.result()
 
-def viaje_cliente(prev_users):
-    try:
-        client = bigquery.Client()
 
-        dataset_id = 'BBDD'
-        table_id = 'tabla_viajes_1'
+def obtener_datos_iniciales(cliente_ids, viaje_ids):
+    client = bigquery.Client()
 
-        table_ref = client.dataset(dataset_id).table(table_id)
-        table = client.get_table(table_ref)
+    dataset_id = 'BBDD'
+    table_id = 'tabla_viajes_1'
 
-        query = f"""
-                SELECT
-                    viaje_id,
-                    latitud,
-                    longitud,
-                FROM
-                    `{dataset_id}.{table_id}`
-                ORDER BY
-                    RAND()
-                LIMIT 5
-                """
-        df_users = client.query(query).to_dataframe()
+    query = f"""
+            SELECT
+                viaje_id,
+                latitud,
+                longitud
+            FROM
+                `{dataset_id}.{table_id}`
+            ORDER BY
+                RAND()
+            LIMIT 200  # Modificar según nº de usuarios 
+            """
+    df = client.query(query).to_dataframe()
 
-        # Agregar nuevos usuarios y viajes a los anteriores
-        df_users["cliente_id"] = [fake.unique.random_int(1, 1000000) for _ in range(len(df_users))]
-        df_users = pd.concat([prev_users, df_users], ignore_index=True)
+    
+    df["cliente_id"] = cliente_ids
+    df["viaje_id"] = viaje_ids
 
-        return df_users
+    return df
 
-    except Exception as e:
-        logging.error(f"Error al obtener viaje aleatorio: {str(e)}")
 
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
-    prev_users = pd.DataFrame(columns=["cliente_id", "viaje_id", "latitud", "longitud"])
+    
+    
+    cliente_ids = [fake.unique.random_int(1, 100000) for _ in range(200)] # Modificar según nº de usuarios 
+    viaje_ids = [fake.random_int(1, 38) for _ in range(200)] # Modificar según nº de usuarios 
 
     try:
         while True:
-            df_users = viaje_cliente(prev_users)
+            df_users = obtener_datos_iniciales(cliente_ids, viaje_ids)
             pubsub_class.insert_into_pubsub(pubsub_class, df_users)
-            prev_users = df_users  # Actualizar usuarios anteriores
-            time.sleep(0.01)  
+            time.sleep(3)  
     except KeyboardInterrupt:
         logging.info("Script interrumpido por el usuario.")
     finally:
@@ -104,4 +105,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
