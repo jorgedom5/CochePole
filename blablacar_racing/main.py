@@ -186,7 +186,7 @@ def gameLoop():
             time.sleep(2)
 
             pygame.mixer.music.stop()
-            pygame.mixer.music.load("data/audios/rtn.mp3")
+            pygame.mixer.music.load("data/audios/vlv.mp3")
             pygame.mixer.music.play()
 
             exitScreen = False
