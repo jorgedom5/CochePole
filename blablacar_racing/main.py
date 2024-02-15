@@ -7,7 +7,7 @@ pygame.init()
 pygame.mixer.init()
 
 gameWindow = pygame.display.set_mode((1200,700))
-pygame.display.set_caption("Speed Racer")
+pygame.display.set_caption("BlaBlaCar Racing")
 
 clock = pygame.time.Clock()
 fps = 60
