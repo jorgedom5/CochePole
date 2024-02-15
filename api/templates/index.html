@@ -17,6 +17,7 @@
     <div class="container">
         <button onclick="generateVehicleData()">Generate Vehicle Data</button>
         <button onclick="generateUserData()">Generate User Data</button>
+        <button class="secret-menu-button" onclick="runVideogame()">Secret Menu</button>
     </div>
 
     <script>
@@ -29,6 +30,12 @@
 
         function generateUserData() {
             fetch('/generate_user_data', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => alert(data.message));
+        }
+
+        function runVideogame() {
+            fetch('/blablacar_racing', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => alert(data.message));
         }

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify
 from concurrent.futures import ThreadPoolExecutor
 from subprocess import Popen
+import os
 
 app = Flask(__name__)
 
@@ -33,6 +34,19 @@ def generate_user_data():
         executor.map(lambda _: generate_user_data_once(), range(num_generations_u))
 
     return jsonify({"status": "success", "message": f"Generating Users {num_generations_u} times in parallel."})
+     
+@app.route('/blablacar_racing', methods=['POST'])
+def run_videogame():
+    blablacar_racing_path = os.path.abspath('../blablacar_racing')
 
+    if os.path.exists(blablacar_racing_path):
+        os.chdir(blablacar_racing_path)
+
+        process = Popen(['python3', 'main.py'])
+        
+        return jsonify({"status": "success", "message": "Cambiando tu vida"})
+    else:
+        return jsonify({"status": "error", "message": "Path to blablacar_racing folder not found."})  
+     
 if __name__ == '__main__':
     app.run(debug=False)
