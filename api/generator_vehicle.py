@@ -46,7 +46,7 @@ class PubSubMessages:
         json_str = json.dumps(message)
         topic_path = self.publisher.topic_path(self.project_id, self.topic_name)
         self.publisher.publish(topic_path, json_str.encode("utf-8"))
-        logging.info("A New vehicle has been monitored. Id: %s", message['vehicle_id'])
+        logging.info("A New vehicle has been monitored. Id: %s", message['vehiculo_id'])
         print(f"Published message: {json_str}")
 
     def __exit__(self):
@@ -60,7 +60,7 @@ def insert_into_pubsub(pubsub_class, df):
             vehiculo_id = random.randint(1, 1000)
             num_plazas = random.randint(1, 4)
 
-            df_copy.loc[df_copy['viaje_id'] == viaje_id, 'vehicle_id'] = vehiculo_id
+            df_copy.loc[df_copy['viaje_id'] == viaje_id, 'vehiculo_id'] = vehiculo_id
             df_copy.loc[df_copy['viaje_id'] == viaje_id, 'num_plazas'] = num_plazas
 
         trip_rows = df_copy[df_copy['viaje_id'] == viaje_id_random]
@@ -76,7 +76,7 @@ def insert_into_pubsub(pubsub_class, df):
         for index, row in trip_rows.iterrows():
             vehicle_payload = {
                 "viaje_id": int(row["viaje_id"]),
-                "vehicle_id": int(row["vehicle_id"]),
+                "vehiculo_id": int(row["vehiculo_id"]),
                 "latitud": float(row["latitud"]),
                 "longitud": float(row["longitud"]),
                 "num_plazas": int(row["num_plazas"]),
