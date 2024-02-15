@@ -55,6 +55,7 @@ for i in range(1,10):
     GCi = pygame.image.load("data/images/Going Cars/"+"GC"+str(i)+".png").convert_alpha()
     GCi = pygame.transform.scale(GCi,(75,158)).convert_alpha()
     goingCars.append([GCi,speedGC[i-1]])
+    
 
 def distance(carX,obstX,carY,obstY,isFuel = False):
 
