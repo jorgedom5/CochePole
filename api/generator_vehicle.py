@@ -7,6 +7,7 @@ import json
 import time
 from google.cloud import bigquery
 import concurrent.futures
+import threading
 
 # Input arguments
 parser = argparse.ArgumentParser(description=('Vehicle Data Generator'))
@@ -87,11 +88,15 @@ def insert_into_pubsub(pubsub_class, df):
             pubsub_class.publishMessages(vehicle_payload)
             time.sleep(7)
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        viaje_ids_random = [random.randint(1, 4) for _ in range(5)]  # NUMERO DE COCHES A LA VEZ
-        futures = [executor.submit(process_trip, viaje_id, df.copy()) for viaje_id in viaje_ids_random]
+    threads = []
+    viaje_ids_random = [random.randint(1, 4) for _ in range(20)]  # NUMERO DE COCHES A LA VEZ
+    for viaje_id in viaje_ids_random:
+        thread = threading.Thread(target=process_trip, args=(viaje_id, df.copy()))
+        threads.append(thread)
+        thread.start()
 
-        concurrent.futures.wait(futures)
+    for thread in threads:
+        thread.join()
 
 
 def main():

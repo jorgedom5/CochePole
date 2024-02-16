@@ -19,7 +19,7 @@ def index():
 
 @app.route('/generate_vehicle_data', methods=['POST'])
 def generate_vehicle_data():
-    num_generations_v = 1 
+    num_generations_v = 2 
 
     with ThreadPoolExecutor(max_workers=num_generations_v) as executor:
         executor.map(lambda _: generate_vehicle_data_once(), range(num_generations_v))
