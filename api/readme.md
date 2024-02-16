@@ -16,8 +16,24 @@ python3 generador_usuarios.py `
     --topic_name "dp2_clientes"
 ```
 
-De momento solo manda por coordenadas el viaje, me gustaría a poder ser que mandara todo de golpe. Este lee de la carpeta data los viajes.
+## INSTRUCCIONES
 
-- generatorbuck.py
+- Vehiculos:
 
-La idea de este código es que lea las coordenadas de un bucket. Es igual que el anterior pero haciendo referencia a un bucket.
+Cambiar lo siguiente:
+
+![Alt text](../img/vec.png)
+
+Donde el primer random es el número de viajes_id en lanzamiento.
+
+Y donde el range es el número de vehículos en circulación.
+
+- Clientes
+
+El limit muestra el numero total de clientes, modificar en función de cuantos quieras:
+
+![Alt text](../img/clil.png)
+
+También modificar estas dos variables:
+
+![Alt text](../img/clir.png)
