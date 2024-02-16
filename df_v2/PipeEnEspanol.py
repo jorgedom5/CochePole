@@ -139,7 +139,7 @@ subscription_name_clientes = "dp2_clientes-sub"
 topic_name_viajes = "dp2_viajes"
 topic_name_clientes = "dp2_clientes"
 bq_dataset = "BBDD"
-bq_table = "pipeline_test1"
+bq_table = "pipeline_test2"
 bucket_name = "test-dp2"
 
 def decode_json(message):
@@ -189,6 +189,25 @@ def run():
 
 
          # Combinacion de las coleciones de vehiculos y usuarios ***** SIN BQ *****
+        # vehiculos_and_users = (
+        #     {'vehiculos': vehiculos, 'users': users} 
+        #     | 'CombineCollections' >> beam.CoGroupByKey()
+        # )
+
+        # Procesamiento de las coincidencias entre vehiculos y usuarios
+        # matches = (
+        #     vehiculos_and_users
+        #     | 'MatchVehiculosAndClientes' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
+        #     | 'PrintMatches' >> beam.Map(print)
+
+        # )
+
+
+        
+
+
+
+        # Combinacion de las coleciones de vehiculos y usuarios ***** CON BQ *****
         vehiculos_and_users = (
             {'vehiculos': vehiculos, 'users': users} 
             | 'CombineCollections' >> beam.CoGroupByKey()
@@ -197,33 +216,14 @@ def run():
         # Procesamiento de las coincidencias entre vehiculos y usuarios
         matches = (
             vehiculos_and_users
-            | 'MatchVehiculosAndClientes' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
-            | 'PrintMatches' >> beam.Map(print)
-
+            | 'MatchVehiculosAndUsers' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
+            | 'WriteToBigQuery' >> WriteToBigQuery(
+                table=f"{project_id}:{bq_dataset}.{bq_table}",
+                schema="cliente_id:INTEGER,rating:FLOAT,metodo_pago:STRING,viaje_id:INTEGER,vehiculo_id:INTEGER,latitud:FLOAT,longitud:FLOAT,latitud_final:FLOAT,longitud_final:FLOAT,timestamp:TIMESTAMP",
+                create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
+                write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
+            )
         )
-
-
-        
-
-
-
-        # Combinacion de las coleciones de vehiculos y usuarios ***** CON BQ *****
-        # vehiculos_and_users = (
-        #     {'vehiculos': vehiculos, 'users': users} 
-        #     | 'CombineCollections' >> beam.CoGroupByKey()
-        # )
-
-        # # Procesamiento de las coincidencias entre vehiculos y usuarios
-        # matches = (
-        #     vehiculos_and_users
-        #     | 'MatchVehiculosAndUsers' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
-        #     | 'WriteToBigQuery' >> WriteToBigQuery(
-        #         table=f"{project_id}:{bq_dataset}.{bq_table}",
-        #         schema="user_id:INTEGER,vehiculo_id:INTEGER,viaje_id:INTEGER,latitud:FLOAT,longitud:FLOAT,timestamp:TIMESTAMP",
-        #         create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
-        #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
-        #     )
-        # )
 
 
 
