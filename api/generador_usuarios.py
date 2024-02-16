@@ -84,8 +84,8 @@ def obtener_datos_iniciales(cliente_ids, viaje_ids):
     
     df["cliente_id"] = cliente_ids
     df["viaje_id"] = viaje_ids
-    df["Rating"] = [random.randint(1, 10) for _ in range(200)]  
-    df["Metodo_pago"] = [random.choice(['Efectivo', 'Tarjeta', 'Bizum']) for _ in range(200)]   # Modificar según nº de usuarios 
+    df["rating"] = [random.randint(1, 10) for _ in range(200)]  
+    df["metodo_pago"] = [random.choice(['Efectivo', 'Tarjeta', 'Bizum']) for _ in range(200)]   # Modificar según nº de usuarios 
 
     return df
 
