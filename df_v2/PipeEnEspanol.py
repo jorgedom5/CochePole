@@ -120,7 +120,7 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                         yield {
                             'cliente_id': cliente['cliente_id'],###### CORREGIR EN BQ
                             'rating': cliente['rating'],
-                            'metodo_pago': cliente['rating'],
+                            'metodo_pago': cliente['metodo_pago'],
                             'pago_viaje': pago_viaje,####AQUI VA EL PAGO_VIAJE
                             'viaje_id': vehiculo['viaje_id'],
                             'vehiculo_id': vehiculo['vehiculo_id'],                                                        
