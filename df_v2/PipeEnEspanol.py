@@ -1,71 +1,109 @@
-from datetime import datetime
 import apache_beam as beam
-import math
-import json
+## from datetime import datetime
+## import math
+## import json
 import logging
 from apache_beam.options.pipeline_options import PipelineOptions
 from apache_beam.io.gcp.pubsub import ReadFromPubSub
 from apache_beam.io.gcp.bigquery import WriteToBigQuery
 from apache_beam.transforms.window import FixedWindows
-from geopy.distance import geodesic
-from datetime import timedelta
+## from geopy.distance import geodesic
+## from datetime import timedelta
 
-# Funciones para manejar vehiculos
-def start_journey_with(vehiculo, client_id):
-    if not is_full(vehiculo):
-        vehiculo['plazas_ocupadas'] += 1
-        vehiculo['clientes'].append(client_id)
-        timestamp = datetime.now()
-        print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha iniciado viaje con cliente {client_id}. Plazas ocupadas: {vehiculo['plazas_ocupadas']}\
-               y plazas disponibles: {vehiculo['num_plazas']}. Ubicación: {vehiculo['latitud']}, {vehiculo['longitud']}")
+## ## Funciones para manejar vehiculos
+## def start_journey_with(vehiculo, client_id):
+##     if not is_full(vehiculo):
+##         vehiculo['plazas_ocupadas'] += 1
+##         vehiculo['clientes'].append(client_id)
+##         timestamp = datetime.now()
+##         print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha iniciado viaje con cliente {client_id}. Plazas ocupadas: {vehiculo['plazas_ocupadas']}\
+##                y plazas disponibles: {vehiculo['num_plazas']}. Ubicación: {vehiculo['latitud']}, {vehiculo['longitud']}")
 
-def is_full(vehiculo):
-    return vehiculo['plazas_ocupadas'] >= vehiculo['num_plazas']
+## def is_full(vehiculo):
+##     return vehiculo['plazas_ocupadas'] >= vehiculo['num_plazas']
 
-def is_available(vehiculo):
-    return not is_full(vehiculo) and not vehiculo['viaje_finalizado']
+## def is_available(vehiculo):
+##     return not is_full(vehiculo) and not vehiculo['viaje_finalizado']
 
-def actualizar_ubicacion(vehiculo, nueva_latitud, nueva_longitud):
-    vehiculo['latitud'] = nueva_latitud
-    vehiculo['longitud'] = nueva_longitud
-    verificar_finalizacion_viaje(vehiculo)
+## def actualizar_ubicacion(vehiculo, nueva_latitud, nueva_longitud):
+##     vehiculo['latitud'] = nueva_latitud
+##     vehiculo['longitud'] = nueva_longitud
+##     verificar_finalizacion_viaje(vehiculo)
 
-def verificar_finalizacion_viaje(vehiculo):
-    try:
-        if vehiculo['latitud'] == vehiculo['latitud_final'] and vehiculo['longitud'] == vehiculo['longitud_final']:
-            vehiculo['viaje_finalizado'] = True
-            timestamp = datetime.now()
-            print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha finalizado el viaje en {vehiculo['latitud']}, {vehiculo['longitud']}")
-    except KeyError as e:
-        logging.error(f"Falta una clave esperada en los datos del vehiculo para verificar la finalización del viaje: {e}")
+## def verificar_finalizacion_viaje(vehiculo):
+##     try:
+##         if vehiculo['latitud'] == vehiculo['latitud_final'] and vehiculo['longitud'] == vehiculo['longitud_final']:
+##             vehiculo['viaje_finalizado'] = True
+##             timestamp = datetime.now()
+##             print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha finalizado el viaje en {vehiculo['latitud']}, {vehiculo['longitud']}")
+##     except KeyError as e:
+##         logging.error(f"Falta una clave esperada en los datos del vehiculo para verificar la finalización del viaje: {e}")
 
-# Función para calcular la distancia
-def calculate_distance(lat1, lon1, lat2, lon2):
-    location1 = (lat1, lon1)
-    location2 = (lat2, lon2)
-    distance = geodesic(location1, location2).kilometers
-    return distance
+## ## Función para calcular la distancia
+## def calculate_distance(lat1, lon1, lat2, lon2):
+##     location1 = (lat1, lon1)
+##     location2 = (lat2, lon2)
+##     distance = geodesic(location1, location2).kilometers
+##     return distance
 
-def is_within_route(user_location, vehiculo_route):
-    for point in vehiculo_route:
-        if calculate_distance(*user_location, *point) <= 20:  # KILOMETROS 
-            return True
-    return False
+## def is_within_route(user_location, vehiculo_route):
+##     for point in vehiculo_route:
+##         if calculate_distance(*user_location, *point) <= 20:  ## KILOMETROS 
+##             return True
+##     return False
 
 # Clase DoFn para emparejar vehiculos y usuarios en Apache Beam
 class MatchVehiculosAndUsersDoFn(beam.DoFn):
-    from datetime import datetime
-    import apache_beam as beam
-    import math
-    import json
-    import logging
-    from apache_beam.options.pipeline_options import PipelineOptions
-    from apache_beam.io.gcp.pubsub import ReadFromPubSub
-    from apache_beam.io.gcp.bigquery import WriteToBigQuery
-    from apache_beam.transforms.window import FixedWindows
-    from geopy.distance import geodesic
-    from datetime import timedelta
+    ## from datetime import datetime
+    ## import apache_beam as beam
+    ## import math
+    ## import json
+    ## import logging
+    ## from apache_beam.options.pipeline_options import PipelineOptions
+    ## from apache_beam.io.gcp.pubsub import ReadFromPubSub
+    ## from apache_beam.io.gcp.bigquery import WriteToBigQuery
+    ## from apache_beam.transforms.window import FixedWindows
+    ## from geopy.distance import geodesic
+    ## from datetime import timedelta
+
+
+    def is_full(self,vehiculo):
+        return vehiculo['plazas_ocupadas'] >= vehiculo['num_plazas']
+
+
+
+    def is_available(self,vehiculo):
+        return not self.is_full(vehiculo) and not vehiculo['viaje_finalizado']
+    
+
+    def is_within_route(self, user_location, vehiculo_route):
+        for point in vehiculo_route:
+            if self.calculate_distance(*user_location, *point) <= 20:  # KILOMETROS 
+                return True
+        return False
+    
+
+    def calculate_distance(self,lat1, lon1, lat2, lon2):
+        from geopy.distance import geodesic 
+        location1 = (lat1, lon1)
+        location2 = (lat2, lon2)
+        distance = geodesic(location1, location2).kilometers
+        return distance
+
+
+
+    def start_journey_with(self, vehiculo, client_id):
+        from datetime import datetime
+        if not self.is_full(vehiculo):
+            vehiculo['plazas_ocupadas'] += 1
+            vehiculo['clientes'].append(client_id)
+            timestamp = datetime.now()
+            print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha iniciado viaje con cliente {client_id}. Plazas ocupadas: {vehiculo['plazas_ocupadas']}\
+                y plazas disponibles: {vehiculo['num_plazas']}. Ubicación: {vehiculo['latitud']}, {vehiculo['longitud']}")
+
     def process(self, element):
+        from datetime import datetime
+        import logging
         #print(element)     
         viaje_id, collections = element
         vehiculos, users = collections['vehiculos'], collections['users']
@@ -103,12 +141,12 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                     user_location = (cliente['latitud'], cliente['longitud'])
                     vehiculo_location = (vehiculo['latitud'], vehiculo['longitud'])
 
-                    if (is_available(vehiculo) and
+                    if (self.is_available(vehiculo) and
                         vehiculo['viaje_id'] == cliente['viaje_id'] and 
-                        is_within_route(user_location, [vehiculo_location]) and
+                        self.is_within_route(user_location, [vehiculo_location]) and
                         cliente['cliente_id'] not in vehiculo['clientes']):
                         
-                        start_journey_with(vehiculo, cliente['cliente_id'])
+                        self.start_journey_with(vehiculo, cliente['cliente_id'])
                         clientes_emparejados.add(cliente['cliente_id'])
 
                         # Calcular la distancia y el pago del viaje
@@ -133,7 +171,7 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
             except KeyError as e:
                 logging.error(f"Falta una clave esperada en los datos del vehiculo: {e}")
 
-            if not is_available(vehiculo):
+            if not self.is_available(vehiculo):
                 print(f"Vehiculo con ID {vehiculo['vehiculo_id']} en el viaje con ID {viaje_id} está lleno.")
 
 ####################################################### PIPELINE #######################################################
@@ -163,19 +201,19 @@ def decode_json(message):
 
 def run():
     with beam.Pipeline(options=PipelineOptions(
-        streaming=True,
-        project=project_id,
-        runner="DirectRunner"
+        # streaming=True,
+        # project=project_id,
+        # runner="DirectRunner"
         
         ########################CONFIG PARA ENVIAR A DATAFLOW###############################
-        # streaming=True,
-        # # save_main_session=True
-        # project=project_id,
-        # runner="DataflowRunner",
-        # temp_location=f"gs://{bucket_name}/tmp",
-        # staging_location=f"gs://{bucket_name}/staging",
-        # region="europe-west4"
-        #######################################################
+        streaming=True,
+        # save_main_session=True
+        project=project_id,
+        runner="DataflowRunner",
+        temp_location=f"gs://{bucket_name}/tmp",
+        staging_location=f"gs://{bucket_name}/staging",
+        region="europe-west4"
+        ######################################################
     )) as p:
         # Lectura de mensajes de vehiculos desde PubSub
         vehiculos = (
