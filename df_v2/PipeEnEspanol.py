@@ -54,8 +54,19 @@ def is_within_route(user_location, vehiculo_route):
 
 # Clase DoFn para emparejar vehiculos y usuarios en Apache Beam
 class MatchVehiculosAndUsersDoFn(beam.DoFn):
+    from datetime import datetime
+    import apache_beam as beam
+    import math
+    import json
+    import logging
+    from apache_beam.options.pipeline_options import PipelineOptions
+    from apache_beam.io.gcp.pubsub import ReadFromPubSub
+    from apache_beam.io.gcp.bigquery import WriteToBigQuery
+    from apache_beam.transforms.window import FixedWindows
+    from geopy.distance import geodesic
+    from datetime import timedelta
     def process(self, element):
-        print(element)     
+        #print(element)     
         viaje_id, collections = element
         vehiculos, users = collections['vehiculos'], collections['users']
 
@@ -81,7 +92,9 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                         'cliente_id': user_data['cliente_id'],
                         'viaje_id': user_data['viaje_id'],
                         'latitud': user_data['latitud'],
-                        'longitud': user_data['longitud']
+                        'longitud': user_data['longitud'],
+                        'rating': user_data['rating'],
+                        'metodo_pago': user_data['metodo_pago']
                     }
 
                     if cliente['cliente_id'] in clientes_emparejados:
@@ -99,9 +112,12 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                         clientes_emparejados.add(cliente['cliente_id'])
                         timestamp = datetime.now()
                         yield {
-                            'cliente_id': cliente['cliente_id'], ###### CORREGIR EN BQ
-                            'vehiculo_id': vehiculo['vehiculo_id'],
+                            'cliente_id': cliente['cliente_id'],###### CORREGIR EN BQ
+                            'rating': cliente['rating'],
+                            'metodo_pago': cliente['rating'],
+                            ####AQUI VA EL PAGO_VIAJE
                             'viaje_id': vehiculo['viaje_id'],
+                            'vehiculo_id': vehiculo['vehiculo_id'],                                                        
                             'latitud': vehiculo['latitud'],
                             'longitud': vehiculo['longitud'],
                             'latitud_final':vehiculo['latitud_final'],
@@ -159,7 +175,7 @@ def run():
         vehiculos = (
             p | "ReadFromPubSubViajes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_viajes}')
               | "DecodeVehiculos" >> beam.Map(decode_json)
-              | "WindowViajes" >> beam.WindowInto(FixedWindows(7))  # 10 segundos de ventana
+              | "WindowViajes" >> beam.WindowInto(FixedWindows(30))  # 10 segundos de ventana
               | 'PairVehiculos' >> beam.Map(lambda v: (v['viaje_id'], v))              
         )
         
@@ -167,7 +183,7 @@ def run():
         users = (
             p | "ReadFromPubSubClientes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_clientes}')
               | "DecodeClientes" >> beam.Map(decode_json)
-              | "WindowClientes" >> beam.WindowInto(FixedWindows(7))  # 10 segundos de ventana
+              | "WindowClientes" >> beam.WindowInto(FixedWindows(30))  # 10 segundos de ventana
               | 'PairClientes' >> beam.Map(lambda u: (u['viaje_id'], u))             
         )
 
