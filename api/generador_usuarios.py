@@ -54,8 +54,8 @@ class PubSubMessages:
                 "viaje_id": int(row["viaje_id"]),
                 "latitud": float(row["latitud"]) + fake.random.uniform(0.001, 0.002),
                 "longitud": float(row["longitud"]) + fake.random.uniform(-0.001, -0.002),
-                "Rating":  int(row["Rating"]),
-                "Metodo_pago": str(row["Metodo_pago"]),
+                "rating":  int(row["rating"]),
+                "metodo_pago": str(row["metodo_pago"]),
             }) for _, row in df_users.iterrows()]
 
             for future in futures:

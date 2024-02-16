@@ -88,7 +88,7 @@ def insert_into_pubsub(pubsub_class, df):
             time.sleep(7)
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        viaje_ids_random = [random.randint(1, 4) for _ in range(5)]  # NUMERO DE COCHES A LA VEZ
+        viaje_ids_random = [random.randint(1, 38) for _ in range(60)]  # NUMERO DE COCHES A LA VEZ
         futures = [executor.submit(process_trip, viaje_id, df.copy()) for viaje_id in viaje_ids_random]
 
         concurrent.futures.wait(futures)
