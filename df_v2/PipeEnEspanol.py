@@ -110,12 +110,18 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                         
                         start_journey_with(vehiculo, cliente['cliente_id'])
                         clientes_emparejados.add(cliente['cliente_id'])
+
+                        # Calcular la distancia y el pago del viaje
+                        distancia = calculate_distance(vehiculo['latitud'], vehiculo['longitud'], vehiculo['latitud_final'], vehiculo['longitud_final'])
+                        pago_viaje = distancia * 1  # 1 euro por kilómetro
+
+
                         timestamp = datetime.now()
                         yield {
                             'cliente_id': cliente['cliente_id'],###### CORREGIR EN BQ
                             'rating': cliente['rating'],
                             'metodo_pago': cliente['rating'],
-                            ####AQUI VA EL PAGO_VIAJE
+                            'pago_viaje': pago_viaje,####AQUI VA EL PAGO_VIAJE
                             'viaje_id': vehiculo['viaje_id'],
                             'vehiculo_id': vehiculo['vehiculo_id'],                                                        
                             'latitud': vehiculo['latitud'],
@@ -139,7 +145,7 @@ subscription_name_clientes = "dp2_clientes-sub"
 topic_name_viajes = "dp2_viajes"
 topic_name_clientes = "dp2_clientes"
 bq_dataset = "BBDD"
-bq_table = "pipeline_test2"
+bq_table = "pipeline_test4"
 bucket_name = "test-dp2"
 
 def decode_json(message):
@@ -219,7 +225,7 @@ def run():
             | 'MatchVehiculosAndUsers' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
             | 'WriteToBigQuery' >> WriteToBigQuery(
                 table=f"{project_id}:{bq_dataset}.{bq_table}",
-                schema="cliente_id:INTEGER,rating:FLOAT,metodo_pago:STRING,viaje_id:INTEGER,vehiculo_id:INTEGER,latitud:FLOAT,longitud:FLOAT,latitud_final:FLOAT,longitud_final:FLOAT,timestamp:TIMESTAMP",
+                schema="cliente_id:INTEGER,rating:FLOAT,metodo_pago:STRING,pago_viaje:FLOAT,viaje_id:INTEGER,vehiculo_id:INTEGER,latitud:FLOAT,longitud:FLOAT,latitud_final:FLOAT,longitud_final:FLOAT,timestamp:TIMESTAMP",
                 create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
             )
