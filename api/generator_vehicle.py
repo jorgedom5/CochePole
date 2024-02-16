@@ -102,10 +102,12 @@ def insert_into_pubsub(pubsub_class, df):
 def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
 
-    # asignar_vehiculos_a_viaje(df)
-
-    insert_into_pubsub(pubsub_class, df)
-
+    try:
+        insert_into_pubsub(pubsub_class, df)
+    except KeyboardInterrupt:
+        logging.info("Keyboard interrupt detected. Stopping the program gracefully.")
+    finally:
+        pubsub_class.__exit__()
 
 if __name__ == "__main__":
     main()
