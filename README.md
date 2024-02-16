@@ -28,7 +28,7 @@ Here's a glimpse of the cloud tech that powers this epic mission:
 
 These cloud technologies form the backbone of Toro Rojo's ambitious project, enabling them to crunch data, optimize routes, and provide a top-notch user experience. Join us in this tech-powered escapade, and let's make the streets of Valencia buzz with excitement! 🚗🐃✨
 
-![alt text](./img/1.jpg)
+![alt text](./img/Arquitectura%20DP2.png)
 
 ## How to Contribute🤝👩‍💻👨‍💻
 
