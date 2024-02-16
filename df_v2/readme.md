@@ -1,7 +1,5 @@
-```bash
-./
-├── main.py                         # Archivo principal para ejecutar el pipeline de Beam
-├── Funciones.py                    # Contiene funcionalidades tanto auxiliares como de transoformacion de Apache Beam
-├── Classes.py                      # Contiene las definiciones de las clases "vehicle" y "cliente
-```
+# Para correr el codigo usar el siguiente comando
 
+### En cmd:
+
+python .\PipeDf.py --requirements_file requirements.txt
