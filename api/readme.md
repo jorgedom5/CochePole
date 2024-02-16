@@ -5,7 +5,7 @@
 Para que funcione:
 
 ```powershell
-python3 generator_vehicle_fijo.py `
+python3 generator_vehicle.py `
     --project_id "dataproject-2-413010" `
     --topic_name "dp2_viajes"
 ```
