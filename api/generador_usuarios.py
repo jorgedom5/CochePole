@@ -85,8 +85,8 @@ def obtener_datos_iniciales(cliente_ids, viaje_ids):
     
     df["cliente_id"] = cliente_ids
     df["viaje_id"] = viaje_ids
-    alpha = 2
-    beta = 5
+    alpha = 4
+    beta = 2
     beta_values = np.random.beta(alpha, beta, size=200)
     rating_min = 1
     rating_max = 10
