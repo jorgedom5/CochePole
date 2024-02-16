@@ -54,6 +54,8 @@ class PubSubMessages:
                 "viaje_id": int(row["viaje_id"]),
                 "latitud": float(row["latitud"]) + fake.random.uniform(0.001, 0.002),
                 "longitud": float(row["longitud"]) + fake.random.uniform(-0.001, -0.002),
+                "Rating":  int(row["Rating"]),
+                "Metodo_pago": str(row["Metodo_pago"]),
             }) for _, row in df_users.iterrows()]
 
             for future in futures:
@@ -82,6 +84,8 @@ def obtener_datos_iniciales(cliente_ids, viaje_ids):
     
     df["cliente_id"] = cliente_ids
     df["viaje_id"] = viaje_ids
+    df["Rating"] = [random.randint(1, 10) for _ in range(200)]  
+    df["Metodo_pago"] = [random.choice(['Efectivo', 'Tarjeta', 'Bizum']) for _ in range(200)]   # Modificar según nº de usuarios 
 
     return df
 
@@ -90,7 +94,7 @@ def main():
     pubsub_class = PubSubMessages(args.project_id, args.topic_name)
     
     
-    cliente_ids = [fake.unique.random_int(1, 100000) for _ in range(200)] # Modificar según nº de usuarios 
+    cliente_ids = [fake.unique.random_int(1, 100000) for _ in range(200)]
     viaje_ids = [fake.random_int(1, 38) for _ in range(200)] # Modificar según nº de usuarios 
 
     try:
