@@ -10,34 +10,34 @@ from apache_beam.transforms.window import FixedWindows
 from geopy.distance import geodesic
 from datetime import timedelta
 
-# Funciones para manejar vehículos
-def start_journey_with(vehicle, client_id):
-    if not is_full(vehicle):
-        vehicle['plazas_ocupadas'] += 1
-        vehicle['clientes'].append(client_id)
+# Funciones para manejar vehiculos
+def start_journey_with(vehiculo, client_id):
+    if not is_full(vehiculo):
+        vehiculo['plazas_ocupadas'] += 1
+        vehiculo['clientes'].append(client_id)
         timestamp = datetime.now()
-        print(f"[{timestamp}] Vehículo {vehicle['vehicle_id']} ha iniciado viaje con cliente {client_id}. Plazas ocupadas: {vehicle['plazas_ocupadas']}\
-               y plazas disponibles: {vehicle['num_plazas']}. Ubicación: {vehicle['latitud']}, {vehicle['longitud']}")
+        print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha iniciado viaje con cliente {client_id}. Plazas ocupadas: {vehiculo['plazas_ocupadas']}\
+               y plazas disponibles: {vehiculo['num_plazas']}. Ubicación: {vehiculo['latitud']}, {vehiculo['longitud']}")
 
-def is_full(vehicle):
-    return vehicle['plazas_ocupadas'] >= vehicle['num_plazas']
+def is_full(vehiculo):
+    return vehiculo['plazas_ocupadas'] >= vehiculo['num_plazas']
 
-def is_available(vehicle):
-    return not is_full(vehicle) and not vehicle['viaje_finalizado']
+def is_available(vehiculo):
+    return not is_full(vehiculo) and not vehiculo['viaje_finalizado']
 
-def actualizar_ubicacion(vehicle, nueva_latitud, nueva_longitud):
-    vehicle['latitud'] = nueva_latitud
-    vehicle['longitud'] = nueva_longitud
-    verificar_finalizacion_viaje(vehicle)
+def actualizar_ubicacion(vehiculo, nueva_latitud, nueva_longitud):
+    vehiculo['latitud'] = nueva_latitud
+    vehiculo['longitud'] = nueva_longitud
+    verificar_finalizacion_viaje(vehiculo)
 
-def verificar_finalizacion_viaje(vehicle):
+def verificar_finalizacion_viaje(vehiculo):
     try:
-        if vehicle['latitud'] == vehicle['latitud_final'] and vehicle['longitud'] == vehicle['longitud_final']:
-            vehicle['viaje_finalizado'] = True
+        if vehiculo['latitud'] == vehiculo['latitud_final'] and vehiculo['longitud'] == vehiculo['longitud_final']:
+            vehiculo['viaje_finalizado'] = True
             timestamp = datetime.now()
-            print(f"[{timestamp}] Vehículo {vehicle['vehicle_id']} ha finalizado el viaje en {vehicle['latitud']}, {vehicle['longitud']}")
+            print(f"[{timestamp}] Vehiculo {vehiculo['vehiculo_id']} ha finalizado el viaje en {vehiculo['latitud']}, {vehiculo['longitud']}")
     except KeyError as e:
-        logging.error(f"Falta una clave esperada en los datos del vehículo para verificar la finalización del viaje: {e}")
+        logging.error(f"Falta una clave esperada en los datos del vehiculo para verificar la finalización del viaje: {e}")
 
 # Función para calcular la distancia
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -46,31 +46,31 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     distance = geodesic(location1, location2).kilometers
     return distance
 
-def is_within_route(user_location, vehicle_route):
-    for point in vehicle_route:
+def is_within_route(user_location, vehiculo_route):
+    for point in vehiculo_route:
         if calculate_distance(*user_location, *point) <= 20:  # KILOMETROS 
             return True
     return False
 
-# Clase DoFn para emparejar vehículos y usuarios en Apache Beam
-class MatchVehiclesAndUsersDoFn(beam.DoFn):
+# Clase DoFn para emparejar vehiculos y usuarios en Apache Beam
+class MatchVehiculosAndUsersDoFn(beam.DoFn):
     def process(self, element):
         print(element)     
         viaje_id, collections = element
-        vehicles, users = collections['vehicles'], collections['users']
+        vehiculos, users = collections['vehiculos'], collections['users']
 
         clientes_emparejados = set()
 
-        for vehicle_data in vehicles:
+        for vehiculo_data in vehiculos:
             try:
-                vehicle = {
-                    'vehicle_id': vehicle_data['vehicle_id'],
-                    'viaje_id': vehicle_data['viaje_id'],
-                    'latitud': vehicle_data['latitud'],
-                    'longitud': vehicle_data['longitud'],
-                    'num_plazas': vehicle_data['num_plazas'],
-                    'latitud_final': vehicle_data['latitud_final'],
-                    'longitud_final': vehicle_data['longitud_final'],
+                vehiculo = {
+                    'vehiculo_id': vehiculo_data['vehiculo_id'],
+                    'viaje_id': vehiculo_data['viaje_id'],
+                    'latitud': vehiculo_data['latitud'],
+                    'longitud': vehiculo_data['longitud'],
+                    'num_plazas': vehiculo_data['num_plazas'],
+                    'latitud_final': vehiculo_data['latitud_final'],
+                    'longitud_final': vehiculo_data['longitud_final'],
                     'plazas_ocupadas': 0,
                     'clientes': [],                
                     'viaje_finalizado': False
@@ -88,32 +88,31 @@ class MatchVehiclesAndUsersDoFn(beam.DoFn):
                         continue
                     
                     user_location = (cliente['latitud'], cliente['longitud'])
-                    vehicle_location = (vehicle['latitud'], vehicle['longitud'])
+                    vehiculo_location = (vehiculo['latitud'], vehiculo['longitud'])
 
-                    if (is_available(vehicle) and
-                        vehicle['viaje_id'] == cliente['viaje_id'] and 
-                        is_within_route(user_location, [vehicle_location]) and
-                        cliente['cliente_id'] not in vehicle['clientes']):
+                    if (is_available(vehiculo) and
+                        vehiculo['viaje_id'] == cliente['viaje_id'] and 
+                        is_within_route(user_location, [vehiculo_location]) and
+                        cliente['cliente_id'] not in vehiculo['clientes']):
                         
-                        start_journey_with(vehicle, cliente['cliente_id'])
+                        start_journey_with(vehiculo, cliente['cliente_id'])
                         clientes_emparejados.add(cliente['cliente_id'])
                         timestamp = datetime.now()
                         yield {
-                            'user_id': cliente['cliente_id'],
-                            'vehicle_id': vehicle['vehicle_id'],
-                            'viaje_id': vehicle['viaje_id'],
-                            'latitud': vehicle['latitud'],
-                            'longitud': vehicle['longitud'],
-                            'latitud_final':vehicle['latitud_final'],
-                            'longitud_final':vehicle['longitud_final'],
+                            'cliente_id': cliente['cliente_id'], ###### CORREGIR EN BQ
+                            'vehiculo_id': vehiculo['vehiculo_id'],
+                            'viaje_id': vehiculo['viaje_id'],
+                            'latitud': vehiculo['latitud'],
+                            'longitud': vehiculo['longitud'],
+                            'latitud_final':vehiculo['latitud_final'],
+                            'longitud_final':vehiculo['longitud_final'],
                             'timestamp': timestamp.isoformat()
                         }
             except KeyError as e:
-                logging.error(f"Falta una clave esperada en los datos del vehículo: {e}")
+                logging.error(f"Falta una clave esperada en los datos del vehiculo: {e}")
 
-            if not is_available(vehicle):
-                print(f"Vehículo con ID {vehicle['vehicle_id']} en el viaje con ID {viaje_id} está lleno.")
-
+            if not is_available(vehiculo):
+                print(f"Vehiculo con ID {vehiculo['vehiculo_id']} en el viaje con ID {viaje_id} está lleno.")
 
 ####################################################### PIPELINE #######################################################
 
@@ -140,7 +139,6 @@ def decode_json(message):
     # Return function
     return msg
 
-
 def run():
     with beam.Pipeline(options=PipelineOptions(
         streaming=True,
@@ -158,11 +156,11 @@ def run():
         #######################################################
     )) as p:
         # Lectura de mensajes de vehiculos desde PubSub
-        vehicles = (
+        vehiculos = (
             p | "ReadFromPubSubViajes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_viajes}')
-              | "DecodeVehicles" >> beam.Map(decode_json)
+              | "DecodeVehiculos" >> beam.Map(decode_json)
               | "WindowViajes" >> beam.WindowInto(FixedWindows(7))  # 10 segundos de ventana
-              | 'PairVehicles' >> beam.Map(lambda v: (v['viaje_id'], v))              
+              | 'PairVehiculos' >> beam.Map(lambda v: (v['viaje_id'], v))              
         )
         
         # Lectura de mensaje de clientes desde PubSub
@@ -170,20 +168,20 @@ def run():
             p | "ReadFromPubSubClientes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_clientes}')
               | "DecodeClientes" >> beam.Map(decode_json)
               | "WindowClientes" >> beam.WindowInto(FixedWindows(7))  # 10 segundos de ventana
-              | 'PairUsers' >> beam.Map(lambda u: (u['viaje_id'], u))             
+              | 'PairClientes' >> beam.Map(lambda u: (u['viaje_id'], u))             
         )
 
 
          # Combinacion de las coleciones de vehiculos y usuarios ***** SIN BQ *****
-        vehicles_and_users = (
-            {'vehicles': vehicles, 'users': users} 
+        vehiculos_and_users = (
+            {'vehiculos': vehiculos, 'users': users} 
             | 'CombineCollections' >> beam.CoGroupByKey()
         )
 
         # Procesamiento de las coincidencias entre vehiculos y usuarios
         matches = (
-            vehicles_and_users
-            | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
+            vehiculos_and_users
+            | 'MatchVehiculosAndClientes' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
             | 'PrintMatches' >> beam.Map(print)
 
         )
@@ -194,18 +192,18 @@ def run():
 
 
         # Combinacion de las coleciones de vehiculos y usuarios ***** CON BQ *****
-        # vehicles_and_users = (
-        #     {'vehicles': vehicles, 'users': users} 
+        # vehiculos_and_users = (
+        #     {'vehiculos': vehiculos, 'users': users} 
         #     | 'CombineCollections' >> beam.CoGroupByKey()
         # )
 
         # # Procesamiento de las coincidencias entre vehiculos y usuarios
         # matches = (
-        #     vehicles_and_users
-        #     | 'MatchVehiclesAndUsers' >> beam.ParDo(MatchVehiclesAndUsersDoFn())
+        #     vehiculos_and_users
+        #     | 'MatchVehiculosAndUsers' >> beam.ParDo(MatchVehiculosAndUsersDoFn())
         #     | 'WriteToBigQuery' >> WriteToBigQuery(
         #         table=f"{project_id}:{bq_dataset}.{bq_table}",
-        #         schema="user_id:INTEGER,vehicle_id:INTEGER,viaje_id:INTEGER,latitud:FLOAT,longitud:FLOAT,timestamp:TIMESTAMP",
+        #         schema="user_id:INTEGER,vehiculo_id:INTEGER,viaje_id:INTEGER,latitud:FLOAT,longitud:FLOAT,timestamp:TIMESTAMP",
         #         create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
         #         write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
         #     )
@@ -224,4 +222,3 @@ if __name__ == '__main__':
     
     # Run Process
     run()
-
