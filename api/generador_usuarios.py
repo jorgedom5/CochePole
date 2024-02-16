@@ -8,6 +8,7 @@ import time
 from google.cloud import bigquery
 from faker import Faker
 from concurrent.futures import ThreadPoolExecutor
+import numpy as np
 
 # Input arguments
 parser = argparse.ArgumentParser(description=('User Data Generator'))
@@ -84,8 +85,15 @@ def obtener_datos_iniciales(cliente_ids, viaje_ids):
     
     df["cliente_id"] = cliente_ids
     df["viaje_id"] = viaje_ids
-    df["rating"] = [random.randint(1, 10) for _ in range(200)]  
-    df["metodo_pago"] = [random.choice(['Efectivo', 'Tarjeta', 'Bizum']) for _ in range(200)]   # Modificar según nº de usuarios 
+    alpha = 2
+    beta = 5
+    beta_values = np.random.beta(alpha, beta, size=200)
+    rating_min = 1
+    rating_max = 10
+    df["rating"] = np.round(beta_values * (rating_max - rating_min) + rating_min).astype(int)
+    probabilidades = [0.65, 0.25, 0.10]
+    df["metodo_pago"] = random.choices(['Tarjeta', 'Efectivo', 'Bizum'], weights=probabilidades, k=200)
+
 
     return df
 
