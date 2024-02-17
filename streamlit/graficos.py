@@ -16,7 +16,7 @@ client = bigquery.Client(project='dataproject-2-413010')
 query_df = """
 SELECT p.*, 
 v.nombre_conductor, v.marca_coche, v.color_coche, v.anio_fabricacion, 
-v.tipo_combustible, v.tiene_calefaccion, v.puntos_carnet, v.cilindraje_motor, v.kilometraje,
+v.tipo_combustible, v.tiene_calefaccion, v.puntos_carnet, v.cilindraje_motor, v.kilometraje, v.anio_registro_app,
 c.nombre_cliente, c.apellido_cliente, c.edad_cliente, c.genero_cliente,
 FROM dataproject-2-413010.BBDD.CochePole_BD p
 left join dataproject-2-413010.BBDD.tabla_vehiculos v on p.vehiculo_id = v.vehiculo_id
@@ -25,6 +25,7 @@ left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente
 
 df = client.query(query_df).to_dataframe()
 
+# A BORRAR
 df
 
 df.dtypes
@@ -59,6 +60,10 @@ st.sidebar.metric("Rating Promedio de Clientes", round(rating_promedio_conductor
 # KPI 7: Promedio de edad de clientes
 edad_media_clientes = df['edad_cliente'].mean()
 st.sidebar.metric("Edad Media de los Clientes", round(edad_media_clientes, 2), delta=edad_media_clientes)
+
+# KPI 8: Kilometraje promedio por viaje
+kilometraje_promedio_por_viaje = df['anio_registro_app'].mean()
+st.sidebar.metric("Año Promedio Registro", f"{kilometraje_promedio_por_viaje:,.0f}")
 
 
 # SECCIÓN GRAFICOS
