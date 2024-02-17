@@ -178,6 +178,35 @@ fig_boxplot_rating_color = px.box(df_top_colores, x='color_coche', y='rating',
 st.title('Box Plot: Relación entre Rating de Clientes y Top 14 Colores de Coche')
 st.plotly_chart(fig_boxplot_rating_color)
 
+# GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR 
+df = client.query(query_df).to_dataframe()
+
+# Crear el gráfico de densidad
+fig = plt.figure(figsize=(10, 6))
+sns.kdeplot(df['puntos_carnet'], shade=True)
+
+plt.title('Distribución de Puntos del Carnet de Conducir (Campana de Gauss)')
+plt.xlabel('Puntos del Carnet de Conducir')
+plt.ylabel('Densidad')
+
+st.pyplot(fig)
+
+# GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
+df = client.query(query_df).to_dataframe()
+
+coches_por_combustible = df['tipo_combustible'].value_counts()
+
+paleta_colores = {
+    'Gasolina': '#FF5733', 
+    'Híbrido': '#45B6AF',  
+    'Eléctrico': '#488AC7' 
+}
+
+fig = px.pie(names=coches_por_combustible.index, values=coches_por_combustible.values, 
+             title='Distribución de Coches por Tipo de Combustible',
+             color=coches_por_combustible.index,
+             color_discrete_map=paleta_colores)
+
 
 # GRÁFICO DE DISPERSIÓN ENTRE RATING Y RECAUDACIÓN POR VIAJE
 fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
