@@ -24,6 +24,7 @@ left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente
 
 df = client.query(query_df).to_dataframe()
 
+# A BORRAR
 df
 
 df.dtypes
