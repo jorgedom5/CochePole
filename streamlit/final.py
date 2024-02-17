@@ -113,7 +113,7 @@ else:
         if row['viaje_id'] == selected_viaje:
             # Obtener la imagen predeterminada de la persona
             icono_persona_file = imagenes_predeterminadas[(row['latitud'], row['longitud'])]
-            icono_persona = folium.CustomIcon(icon_image=icono_persona_file, icon_size=(32, 32))
+            icono_persona = folium.CustomIcon(icon_image=icono_persona_file, icon_size=(40, 40))
             folium.Marker([row['latitud'], row['longitud']], icon=icono_persona).add_to(m_viaje)
 
     # Agregar marcador del coche en la posición inicial

@@ -26,6 +26,8 @@ df = client.query(query_df).to_dataframe()
 
 df
 
+df.dtypes
+
 
 # SECCIÓN KPI
 
@@ -62,9 +64,9 @@ st.sidebar.metric("Edad Media de los Clientes", round(edad_media_clientes, 2), d
 
 # GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
 recaudacion_df = df.groupby('nombre_conductor')['pago_viaje'].sum().reset_index()
-recaudacion_df = recaudacion_df.sort_values(by='pago_viaje', ascending=False)
+recaudacion_df = recaudacion_df.sort_values(by='pago_viaje', ascending=False).head(14)
 
-st.title('Recaudación por Conductor al Final del Día')
+st.title('Top 14 Ganancias por conductor')
 fig_recaudacion = px.bar(recaudacion_df, x='nombre_conductor', y='pago_viaje', labels={'pago_viaje': 'Recaudación'})
 st.plotly_chart(fig_recaudacion)
 
@@ -107,6 +109,25 @@ fig_rating_promedio.update_traces(marker_color='skyblue', marker_line_color='bla
 
 st.title('Nota Promedia de Nuestros Clientes')
 st.plotly_chart(fig_rating_promedio)
+
+
+# GRÁFICO RECAUDACIÓN COCHE
+recaudacion_por_marca_df = df.groupby('marca_coche')['pago_viaje'].sum().reset_index()
+recaudacion_por_marca_df = recaudacion_por_marca_df.sort_values(by='pago_viaje', ascending=False).head(14)
+
+st.title('Top 14 Recaudación por Marca de Coche')
+fig_recaudacion_por_marca = px.bar(recaudacion_por_marca_df, x='marca_coche', y='pago_viaje', 
+                                   labels={'pago_viaje': 'Recaudación por Marca de Coche'},
+                                   title='Top 14 Recaudación por Marca de Coche')
+st.plotly_chart(fig_recaudacion_por_marca)
+
+
+# GRÁFICO DE DISPERSIÓN ENTRE RATING Y RECAUDACIÓN POR VIAJE
+fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
+                               color='genero_cliente', size='pago_viaje',
+                               labels={'recaudacion_total': 'Recaudación Total', 'rating': 'Rating', 'edad_cliente': 'Edad del Cliente'},
+                               title='Relación Tridimensional entre Recaudación, Rating y Edad del Cliente')
+st.plotly_chart(fig_scatter_3d)
 
 # ## GRÁFICO MAPA DE CALOR DE COORDENADAS
 
