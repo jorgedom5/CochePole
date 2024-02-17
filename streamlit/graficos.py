@@ -8,6 +8,10 @@ from google.cloud import bigquery
 import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
+import joblib
+from datetime import datetime
+
+best_model = joblib.load('../machine_learning/modelo_1.joblib')
 
 # Crear cliente de BigQuery
 client = bigquery.Client(project='dataproject-2-413010')
@@ -271,3 +275,61 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig)
+
+
+# MODELO DE MACHINE LEARNING RMSE BAJO
+
+st.title('Predicción de pago de viaje para el cliente')
+
+rating = st.slider('Rating del cliente', 0.0, 10.0, 8.0)
+metodo_pago = st.selectbox('Método de pago', ['Efectivo', 'Tarjeta', 'Bizum'])
+latitud = st.number_input('Latitud del inicio del viaje', value=39.50802)
+longitud = st.number_input('Longitud del inicio del viaje', value=-0.32170)
+latitud_final = st.number_input('Latitud del destino del viaje', value=39.47947)
+longitud_final = st.number_input('Longitud del destino del viaje', value=-0.37594)
+timestamp_str = st.text_input('Fecha y hora del viaje (YYYY-MM-DD HH:MM:SS)', '2024-02-17 11:10:33')
+timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+marca_coche = st.text_input('Marca del coche', 'BMW')
+color_coche = st.text_input('Color del coche', 'Marrón siena')
+anio_fabricacion = st.number_input('Año de fabricación del coche', value=2020)
+tipo_combustible = st.selectbox('Tipo de combustible', ['Gasolina', 'Híbrido', 'Eléctrico'])
+tiene_calefaccion = st.selectbox('Tiene calefacción', [0, 1])
+puntos_carnet = st.number_input('Puntos del carnet de conducir', value=11)
+cilindraje_motor = st.number_input('Cilindraje del motor', value=2500)
+kilometraje = st.number_input('Kilometraje del coche', value=42353)
+anio_registro_app = st.number_input('Año de registro en la aplicación', value=2022)
+edad_cliente = st.number_input('Edad del cliente', value=48)
+genero_cliente = st.selectbox('Género del cliente', ['masculino', 'femenino', 'desconocido'])
+trabajo_cliente = st.text_input('Trabajo del cliente', 'Parquetero y colocador de suelos')
+fecha_registro = st.text_input('Fecha de registro en la aplicación (YYYY-MM-DD)', '2023-09-24')
+
+if st.button('Realizar Predicción'):
+    cliente_data = {
+        'rating': [rating],
+        'metodo_pago': [metodo_pago],
+        'latitud': [latitud],
+        'longitud': [longitud],
+        'latitud_final': [latitud_final],
+        'longitud_final': [longitud_final],
+        'timestamp': [timestamp],
+        'marca_coche': [marca_coche],
+        'color_coche': [color_coche],
+        'anio_fabricacion': [anio_fabricacion],
+        'tipo_combustible': [tipo_combustible],
+        'tiene_calefaccion': [tiene_calefaccion],
+        'puntos_carnet': [puntos_carnet],
+        'cilindraje_motor': [cilindraje_motor],
+        'kilometraje': [kilometraje],
+        'anio_registro_app': [anio_registro_app],
+        'edad_cliente': [edad_cliente],
+        'genero_cliente': [genero_cliente],
+        'trabajo_cliente': [trabajo_cliente],
+        'fecha_registro': [fecha_registro]
+    }
+    cliente_df = pd.DataFrame(cliente_data)
+
+    prediction = best_model.predict(cliente_df)
+
+    st.subheader('Resultado de la predicción:')
+    formatted_prediction = f'Predicción de pago de viaje para el cliente: {prediction[0]:,.2f} €'
+    st.write(formatted_prediction)
