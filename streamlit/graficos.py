@@ -92,6 +92,22 @@ st.title('Número de Viajes Realizados por Conductor')
 fig_viajes_por_conductor = px.bar(viajes_por_conductor_df, x='num_viajes', y='vehiculo_id', labels={'num_viajes': 'Número de Viajes', 'vehiculo_id': 'ID del Conductor'})
 st.plotly_chart(fig_viajes_por_conductor)
 
+# ## GRÁFICO MAPA DE CALOR DE COORDENADAS
+
+fig = px.density_mapbox(
+    df,
+    lat='latitud',
+    lon='longitud',
+    radius=30, # CAMBIAR TAMAÑO CIRCULOS
+    center=dict(lat=df['latitud'].mean(), lon=df['longitud'].mean()),
+    color_continuous_scale="inferno",
+    zoom=12,
+    mapbox_style="open-street-map", 
+    title='Mapa de Densidad de Coordenadas de Viajes'
+)
+
+st.plotly_chart(fig)
+
 # GRÁFICO METODO DE PAGO MÁS UTILIZADO
 metodo_pago_preferido_df = df['metodo_pago'].value_counts().reset_index()
 metodo_pago_preferido_df.columns = ['metodo_pago', 'cantidad']
@@ -117,7 +133,7 @@ st.title('Nota Promedia de Nuestros Clientes')
 st.plotly_chart(fig_rating_promedio)
 
 
-# GRÁFICO RECAUDACIÓN COCHE
+# GRÁFICO RECAUDACIÓN MARCA
 recaudacion_por_marca_df = df.groupby('marca_coche')['pago_viaje'].sum().reset_index()
 recaudacion_por_marca_df = recaudacion_por_marca_df.sort_values(by='pago_viaje', ascending=False).head(14)
 
@@ -127,6 +143,41 @@ fig_recaudacion_por_marca = px.bar(recaudacion_por_marca_df, x='marca_coche', y=
                                    title='Top 14 Recaudación por Marca de Coche')
 st.plotly_chart(fig_recaudacion_por_marca)
 
+# GRÁFICO DE DISTRIBUCIÓN DE TIPO DE COMBUSTIBLE
+tipo_combustible_df = df['tipo_combustible'].value_counts().reset_index()
+tipo_combustible_df.columns = ['tipo_combustible', 'cantidad']
+
+st.title('Distribución del Tipo de Combustible Utilizado por los Vehículos')
+fig_tipo_combustible = px.bar(tipo_combustible_df, x='tipo_combustible', y='cantidad', 
+                              labels={'cantidad': 'Cantidad', 'tipo_combustible': 'Tipo de Combustible'},
+                              title='Distribución del Tipo de Combustible')
+st.plotly_chart(fig_tipo_combustible)
+
+# GRÁFICO DE TARTA: PROPORCIÓN DE INGRESOS POR CLIENTE
+top_clientes_df = df.groupby('cliente_id').agg({'pago_viaje': 'sum', 'nombre_cliente': 'first', 'apellido_cliente': 'first'}).sort_values(by='pago_viaje', ascending=False).head(14).reset_index()
+
+fig_ingresos_por_cliente = px.pie(top_clientes_df, names='nombre_cliente', values='pago_viaje',
+                                  labels={'pago_viaje': 'Recaudación', 'nombre_cliente': 'Nombre del Cliente'},
+                                  title='Proporción de Ingresos por Cliente',
+                                  hover_data=['apellido_cliente'],
+                                  hole=0.3)
+
+st.plotly_chart(fig_ingresos_por_cliente)
+
+
+# GRÁFICO DE BOX PLOT: RELACIÓN ENTRE RATING Y COLOR DE COCHE
+top_colores = df['color_coche'].value_counts().head(14).index.tolist()
+
+df_top_colores = df[df['color_coche'].isin(top_colores)]
+
+fig_boxplot_rating_color = px.box(df_top_colores, x='color_coche', y='rating',
+                                  color='color_coche',
+                                  labels={'rating': 'Rating', 'color_coche': 'Color de Coche'},
+                                  title='Relación entre Rating de Clientes y Color de Coche')
+
+st.title('Box Plot: Relación entre Rating de Clientes y Top 14 Colores de Coche')
+st.plotly_chart(fig_boxplot_rating_color)
+
 
 # GRÁFICO DE DISPERSIÓN ENTRE RATING Y RECAUDACIÓN POR VIAJE
 fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
@@ -135,59 +186,35 @@ fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
                                title='Relación Tridimensional entre Recaudación, Rating y Edad del Cliente')
 st.plotly_chart(fig_scatter_3d)
 
-# ## GRÁFICO MAPA DE CALOR DE COORDENADAS
 
-fig = px.density_mapbox(
-    df,
-    lat='latitud',
-    lon='longitud',
-    radius=30, # CAMBIAR TAMAÑO CIRCULOS
-    center=dict(lat=df['latitud'].mean(), lon=df['longitud'].mean()),
-    color_continuous_scale="inferno",
-    zoom=12,
-    mapbox_style="open-street-map", 
-    title='Mapa de Densidad de Coordenadas de Viajes'
+# GRÁFICO DE RADAR: PERFIL PROMEDIO DEL CONDUCTOR
+perfil_conductor_df = df.groupby('nombre_conductor').agg({
+    'rating': 'mean',
+    'kilometraje': 'mean',
+    'edad_cliente': 'mean',
+    'puntos_carnet': 'mean'
+}).reset_index()
+
+for col in ['rating', 'kilometraje', 'edad_cliente', 'puntos_carnet']:
+    perfil_conductor_df[col] = (perfil_conductor_df[col] - perfil_conductor_df[col].min()) / (perfil_conductor_df[col].max() - perfil_conductor_df[col].min())
+
+fig_radar = go.Figure()
+
+fig_radar.add_trace(go.Scatterpolar(
+      r=perfil_conductor_df.loc[0, ['rating', 'kilometraje', 'edad_cliente', 'puntos_carnet']],
+      theta=['Rating', 'Kilometraje', 'Edad', 'Puntos de Carnet'],
+      fill='toself',
+      name=perfil_conductor_df.loc[0, 'nombre_conductor']
+))
+
+fig_radar.update_layout(
+    polar=dict(
+        radialaxis=dict(
+            visible=True,
+            range=[0, 1]
+        )),
+    showlegend=True,
+    title='Perfil Promedio del Conductor'
 )
-
-st.plotly_chart(fig)
-
-# GRÁFICO VIOLIN DE CILINDRADA DE MOTOR
-fig = plt.figure(figsize=(10, 6))
-sns.violinplot(x='cilindraje_motor', data=df)
-
-plt.title('Distribución de la Cilindrada del Motor de los coches')
-plt.xlabel('Cilindrada del Motor')
-
-st.pyplot(fig)
-
-
-# GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR 
-df = client.query(query_df).to_dataframe()
-
-# Crear el gráfico de densidad
-fig = plt.figure(figsize=(10, 6))
-sns.kdeplot(df['puntos_carnet'], shade=True)
-
-plt.title('Distribución de Puntos del Carnet de Conducir (Campana de Gauss)')
-plt.xlabel('Puntos del Carnet de Conducir')
-plt.ylabel('Densidad')
-
-st.pyplot(fig)
-
-# GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
-df = client.query(query_df).to_dataframe()
-
-coches_por_combustible = df['tipo_combustible'].value_counts()
-
-paleta_colores = {
-    'Gasolina': '#FF5733', 
-    'Híbrido': '#45B6AF',  
-    'Eléctrico': '#488AC7' 
-}
-
-fig = px.pie(names=coches_por_combustible.index, values=coches_por_combustible.values, 
-             title='Distribución de Coches por Tipo de Combustible',
-             color=coches_por_combustible.index,
-             color_discrete_map=paleta_colores)
 
 st.plotly_chart(fig)
