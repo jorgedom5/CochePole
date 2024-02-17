@@ -38,7 +38,6 @@ for index, row in data_personas.iterrows():
         "img/hombre-1.png", 
         "img/mujeres-2.png",
         "img/caballodorado.png",
-        "img/caballodorado.png",
         "img/grupo.png",
         "img/lloron.png"
         ])
