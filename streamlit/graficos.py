@@ -219,7 +219,7 @@ fig_radar.update_layout(
     title='Perfil Promedio del Conductor'
 )
 
-st.plotly_chart(fig)
+
 
 # GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR
 
