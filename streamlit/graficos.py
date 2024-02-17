@@ -23,6 +23,8 @@ left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente
 
 df = client.query(query_df).to_dataframe()
 
+df
+
 # GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
 recaudacion_df = df.groupby('nombre_conductor')['pago_viaje'].sum().reset_index()
 
