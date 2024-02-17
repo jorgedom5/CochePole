@@ -18,6 +18,7 @@ SELECT p.*,
 v.nombre_conductor, v.marca_coche, v.color_coche, v.anio_fabricacion, 
 v.tipo_combustible, v.tiene_calefaccion, v.puntos_carnet, v.cilindraje_motor, v.kilometraje, v.anio_registro_app,
 c.nombre_cliente, c.apellido_cliente, c.edad_cliente, c.genero_cliente,
+c.direccion_cliente, c.trabajo_cliente, c.fecha_registro,
 FROM dataproject-2-413010.BBDD.CochePole_BD p
 left join dataproject-2-413010.BBDD.tabla_vehiculos v on p.vehiculo_id = v.vehiculo_id
 left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente_id
