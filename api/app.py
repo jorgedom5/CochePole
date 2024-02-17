@@ -19,7 +19,7 @@ def index():
 
 @app.route('/generate_vehicle_data', methods=['POST'])
 def generate_vehicle_data():
-    num_generations_v = 2 
+    num_generations_v = 1 
 
     with ThreadPoolExecutor(max_workers=num_generations_v) as executor:
         executor.map(lambda _: generate_vehicle_data_once(), range(num_generations_v))
@@ -28,7 +28,7 @@ def generate_vehicle_data():
 
 @app.route('/generate_user_data', methods=['POST'])
 def generate_user_data():
-    num_generations_u = 20  
+    num_generations_u = 1  
 
     with ThreadPoolExecutor(max_workers=num_generations_u) as executor:
         executor.map(lambda _: generate_user_data_once(), range(num_generations_u))
