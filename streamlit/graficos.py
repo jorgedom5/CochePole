@@ -2,6 +2,7 @@ import streamlit as st
 import folium
 from folium.plugins import HeatMap
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from google.cloud import bigquery
 import plotly.express as px
@@ -179,35 +180,6 @@ fig_boxplot_rating_color = px.box(df_top_colores, x='color_coche', y='rating',
 st.title('Box Plot: Relación entre Rating de Clientes y Top 14 Colores de Coche')
 st.plotly_chart(fig_boxplot_rating_color)
 
-# GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR 
-df = client.query(query_df).to_dataframe()
-
-# Crear el gráfico de densidad
-fig = plt.figure(figsize=(10, 6))
-sns.kdeplot(df['puntos_carnet'], shade=True)
-
-plt.title('Distribución de Puntos del Carnet de Conducir (Campana de Gauss)')
-plt.xlabel('Puntos del Carnet de Conducir')
-plt.ylabel('Densidad')
-
-st.pyplot(fig)
-
-# GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
-df = client.query(query_df).to_dataframe()
-
-coches_por_combustible = df['tipo_combustible'].value_counts()
-
-paleta_colores = {
-    'Gasolina': '#FF5733', 
-    'Híbrido': '#45B6AF',  
-    'Eléctrico': '#488AC7' 
-}
-
-fig = px.pie(names=coches_por_combustible.index, values=coches_por_combustible.values, 
-             title='Distribución de Coches por Tipo de Combustible',
-             color=coches_por_combustible.index,
-             color_discrete_map=paleta_colores)
-
 
 # GRÁFICO DE DISPERSIÓN ENTRE RATING Y RECAUDACIÓN POR VIAJE
 fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
@@ -245,6 +217,57 @@ fig_radar.update_layout(
         )),
     showlegend=True,
     title='Perfil Promedio del Conductor'
+)
+
+st.plotly_chart(fig)
+
+# GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR
+
+mu, sigma = df['puntos_carnet'].mean(), df['puntos_carnet'].std()
+x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+gaussiana = (1/(sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+histograma = go.Histogram(x=df['puntos_carnet'], histnorm='probability density', name='Histograma')
+
+campana_gauss = go.Scatter(x=x, y=gaussiana, mode='lines', name='Campana de Gauss', line=dict(color='red', width=2))
+
+fig = go.Figure(data=[histograma, campana_gauss])
+
+fig.update_layout(
+    title='Distribución de Puntos del Carnet de Conducir (Histograma y Campana de Gauss)',
+    xaxis=dict(title='Puntos del Carnet de Conducir'),
+    yaxis=dict(title='Densidad'),
+)
+
+st.plotly_chart(fig)
+
+# GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
+
+coches_por_combustible = df['tipo_combustible'].value_counts()
+
+paleta_colores = {
+    'Gasolina': '#FF5733', 
+    'Híbrido': '#45B6AF',  
+    'Eléctrico': '#488AC7' 
+}
+
+fig2 = px.pie(names=coches_por_combustible.index, 
+              values=coches_por_combustible.values, 
+              title='Distribución de Coches por Tipo de Combustible',
+              color=coches_por_combustible.index,
+              color_discrete_map=paleta_colores)
+
+st.plotly_chart(fig2)
+
+# GRÁFICO VIOLIN DE CILINDRADA DE MOTOR
+fig = go.Figure(data=go.Violin(y=df['cilindraje_motor'], box_visible=True, line_color='black', meanline_visible=True,
+                               fillcolor='lightseagreen', opacity=0.6))
+
+fig.update_layout(
+    title='Distribución de la Cilindrada del Motor de los coches',
+    xaxis=dict(title='Cilindrada del Motor (en miles)'),
+    yaxis=dict(title=''),
+    xaxis_tickformat=',d'
 )
 
 st.plotly_chart(fig)
