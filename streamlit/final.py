@@ -34,7 +34,7 @@ viaje_ids = data_viajes["viaje_id"].unique()
 # Obtener las imágenes predeterminadas de las personas para el mapa general
 imagenes_predeterminadas = {}  # Un diccionario para almacenar las imágenes predeterminadas por persona
 for index, row in data_personas.iterrows():
-    imagenes_predeterminadas[(row['latitud'], row['longitud'])] = random.choice(["streamlit/hombre-1.png", "streamlit/mujeres-2.png"])
+    imagenes_predeterminadas[(row['latitud'], row['longitud'])] = random.choice(["hombre-1.png", "mujeres-2.png"])
 
 # Crear un desplegable para seleccionar la ruta específica
 selected_viaje = st.sidebar.selectbox("Selecciona el viaje:", ["General"] + viaje_ids.tolist())
