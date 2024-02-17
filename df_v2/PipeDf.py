@@ -52,8 +52,11 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
         vehiculos, users = collections['vehiculos'], collections['users']
 
         clientes_emparejados = set()
+        vehiculos_procesados = set() #agregado
 
         for vehiculo_data in vehiculos:
+            if vehiculo_data['vehiculo_id'] in vehiculos_procesados: #agregado
+                continue
             try:
                 vehiculo = {
                     'vehiculo_id': vehiculo_data['vehiculo_id'],
@@ -111,6 +114,9 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                             'longitud_final':vehiculo['longitud_final'],
                             'timestamp': timestamp.isoformat()
                         }
+                        if self.is_full(vehiculo):
+                            vehiculos_procesados.add(vehiculo['vehiculo_id']) # agregado
+
             except KeyError as e:
                 logging.error(f"Falta una clave esperada en los datos del vehiculo: {e}")
 
