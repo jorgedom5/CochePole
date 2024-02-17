@@ -17,7 +17,7 @@ FROM dataproject-2-413010.BBDD.tabla_viajes_1
 # Consulta SQL para obtener datos de la tabla simulador_streamlit
 query_personas = """
 SELECT latitud, longitud, viaje_id
-FROM dataproject-2-413010.BBDD.simulador_streamlit2
+FROM dataproject-2-413010.BBDD.CochePole_BD
 """
 
 # Obtener los datos de BigQuery
