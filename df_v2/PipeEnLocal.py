@@ -48,10 +48,11 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 def is_within_route(user_location, vehiculo_route):
     for point in vehiculo_route:
-        if calculate_distance(*user_location, *point) <= 20:  ## KILOMETROS 
+        if calculate_distance(*user_location, *point) <= 5:  ## KILOMETROS 
             return True
     return False
-
+clientes_emparejados = set()
+vehiculos_procesados = set() #agregado
 # Clase DoFn para emparejar vehiculos y usuarios en Apache Beam
 class MatchVehiculosAndUsersDoFn(beam.DoFn):
     
@@ -62,9 +63,12 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
         viaje_id, collections = element
         vehiculos, users = collections['vehiculos'], collections['users']
 
-        clientes_emparejados = set()
+        
 
         for vehiculo_data in vehiculos:
+
+            if vehiculo_data['vehiculo_id'] in vehiculos_procesados: #agregado
+                continue
             try:
                 vehiculo = {
                     'vehiculo_id': vehiculo_data['vehiculo_id'],
@@ -110,10 +114,10 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
 
                         timestamp = datetime.now()
                         yield {
-                            'cliente_id': cliente['cliente_id'],###### CORREGIR EN BQ
+                            'cliente_id': cliente['cliente_id'],
                             'rating': cliente['rating'],
                             'metodo_pago': cliente['metodo_pago'],
-                            'pago_viaje': pago_viaje,####AQUI VA EL PAGO_VIAJE
+                            'pago_viaje': pago_viaje,
                             'viaje_id': vehiculo['viaje_id'],
                             'vehiculo_id': vehiculo['vehiculo_id'],                                                        
                             'latitud': vehiculo['latitud'],
@@ -122,6 +126,11 @@ class MatchVehiculosAndUsersDoFn(beam.DoFn):
                             'longitud_final':vehiculo['longitud_final'],
                             'timestamp': timestamp.isoformat()
                         }
+
+                        if is_full(vehiculo):
+                            vehiculos_procesados.add(vehiculo['vehiculo_id']) # agregado
+
+
             except KeyError as e:
                 logging.error(f"Falta una clave esperada en los datos del vehiculo: {e}")
 
@@ -163,7 +172,7 @@ def run():
         vehiculos = (
             p | "ReadFromPubSubViajes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_viajes}')
               | "DecodeVehiculos" >> beam.Map(decode_json)
-              | "WindowViajes" >> beam.WindowInto(FixedWindows(30))  # 10 segundos de ventana
+              | "WindowViajes" >> beam.WindowInto(FixedWindows(15))  # 10 segundos de ventana
               | 'PairVehiculos' >> beam.Map(lambda v: (v['viaje_id'], v))              
         )
         
@@ -171,7 +180,7 @@ def run():
         users = (
             p | "ReadFromPubSubClientes" >> ReadFromPubSub(subscription=f'projects/{project_id}/subscriptions/{subscription_name_clientes}')
               | "DecodeClientes" >> beam.Map(decode_json)
-              | "WindowClientes" >> beam.WindowInto(FixedWindows(30))  # 10 segundos de ventana
+              | "WindowClientes" >> beam.WindowInto(FixedWindows(15))  # 10 segundos de ventana
               | 'PairClientes' >> beam.Map(lambda u: (u['viaje_id'], u))             
         )
 
@@ -188,7 +197,7 @@ def run():
             | 'WriteToBigQuery' >> WriteToBigQuery(
                 table=f"{project_id}:{bq_dataset}.{bq_table}",
                 schema="cliente_id:INTEGER,rating:FLOAT,metodo_pago:STRING,pago_viaje:FLOAT,viaje_id:INTEGER,vehiculo_id:INTEGER,latitud:FLOAT,longitud:FLOAT,latitud_final:FLOAT,longitud_final:FLOAT,timestamp:TIMESTAMP",
-                create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
+                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
             )
         )
