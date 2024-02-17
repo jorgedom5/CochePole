@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 # Crear cliente de BigQuery
 client = bigquery.Client(project='dataproject-2-413010')
 
-## GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
+## QUERY
 
 query_df = """
 SELECT p.*, 
@@ -25,6 +25,40 @@ left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente
 df = client.query(query_df).to_dataframe()
 
 df
+
+
+# SECCIÓN KPI
+
+# KPI 1: Recaudación total
+recaudacion_total = df['pago_viaje'].sum()
+st.sidebar.metric("Recaudación Total", f"${recaudacion_total:,.2f}", delta=recaudacion_total)
+
+# KPI 2: Número total de viajes
+total_viajes = df.groupby(['vehiculo_id', 'viaje_id']).size().reset_index(name='count').shape[0]
+st.sidebar.metric("Número Total de Viajes", total_viajes)
+
+# KPI 3: Recaudación promedio por viaje
+recaudacion_promedio_por_viaje = recaudacion_total / total_viajes
+st.sidebar.metric("Recaudación Promedio por Viaje", f"${recaudacion_promedio_por_viaje:,.2f}", delta=recaudacion_promedio_por_viaje)
+
+# KPI 4: Número de conductores activos
+conductores_activos = df['nombre_conductor'].nunique()
+st.sidebar.metric("Número de Conductores Activos", conductores_activos)
+
+# KPI 5: Número de clientes únicos
+clientes_unicos = df['cliente_id'].nunique()
+st.sidebar.metric("Número de Clientes Únicos", clientes_unicos)
+
+# KPI 6: Promedio de rating de clientes
+rating_promedio_conductores = df.groupby('nombre_conductor')['rating'].mean().mean()
+st.sidebar.metric("Rating Promedio de Clientes", round(rating_promedio_conductores, 2), delta=rating_promedio_conductores)
+
+# KPI 7: Promedio de edad de clientes
+edad_media_clientes = df['edad_cliente'].mean()
+st.sidebar.metric("Edad Media de los Clientes", round(edad_media_clientes, 2), delta=edad_media_clientes)
+
+
+# SECCIÓN GRAFICOS
 
 # GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
 recaudacion_df = df.groupby('nombre_conductor')['pago_viaje'].sum().reset_index()
