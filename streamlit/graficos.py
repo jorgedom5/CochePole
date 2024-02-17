@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from google.cloud import bigquery
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Crear cliente de BigQuery
 client = bigquery.Client(project='dataproject-2-413010')
@@ -60,32 +61,30 @@ st.plotly_chart(fig_metodo_pago)
 rating_medio_por_vehiculo_df = df.groupby('vehiculo_id')['rating'].mean().reset_index()
 rating_medio_por_vehiculo_df.columns = ['vehiculo_id', 'puntuacion_promedio']
 
-st.title('Nota Promedia de Nuestros Conductores')
-fig_rating_promedio = px.histogram(rating_medio_por_vehiculo_df, x='puntuacion_promedio', nbins=5, labels={'puntuacion_promedio': 'Rating Promedio'}, title='Histograma de Ratings Promedio por Vehículo')
+# GRÁFICO DE NOTA PROMEDIA POR VEHÍCULO
+fig_rating_promedio = px.histogram(rating_medio_por_vehiculo_df, x='puntuacion_promedio', nbins=7,
+                                   labels={'puntuacion_promedio': 'Rating Promedio'},
+                                   title='Histograma de Ratings Promedio por Vehículo')
+
+fig_rating_promedio.update_xaxes(range=[1, 10])
+
+fig_rating_promedio.update_traces(marker_color='skyblue', marker_line_color='black', marker_line_width=1)
+
+st.title('Nota Promedia de Nuestros Clientes')
 st.plotly_chart(fig_rating_promedio)
 
 # ## GRÁFICO MAPA DE CALOR DE COORDENADAS
 
-# query_coordenadas_viaje = """
-# SELECT latitud, longitud
-# FROM `dataproject-2-413010.BBDD.CochePole_BD`
-# """
+fig = px.density_mapbox(
+    df,
+    lat='latitud',
+    lon='longitud',
+    radius=30, # CAMBIAR TAMAÑO CIRCULOS
+    center=dict(lat=df['latitud'].mean(), lon=df['longitud'].mean()),
+    color_continuous_scale="inferno",
+    zoom=12,
+    mapbox_style="open-street-map", 
+    title='Mapa de Densidad de Coordenadas de Viajes'
+)
 
-# # Ejecutar la consulta y obtener los resultados
-# resultados = client.query(query_coordenadas_viaje).result()
-
-# # Crear un mapa centrado en un punto promedio de las coordenadas
-# m = folium.Map(location=[0, 0], zoom_start=2)
-
-# # Agrupar las coordenadas de los viajes en una lista
-# heat_data = [[row['latitud'], row['longitud']] for row in resultados]
-
-# # Agregar el mapa de calor al mapa
-# HeatMap(heat_data).add_to(m)
-
-# # Guardar el mapa como HTML en una ruta específica
-# html_file_path = "heatmap.html"
-# m.save(html_file_path)
-
-# # Mostrar el mapa en Streamlit usando un iframe
-# st.write('<iframe src="{}" width="100%" height="500"></iframe>'.format(html_file_path), unsafe_allow_html=True)
+st.plotly_chart(fig)
