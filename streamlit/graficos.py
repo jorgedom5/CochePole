@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from google.cloud import bigquery
 import plotly.express as px
 import plotly.graph_objects as go
+import seaborn as sns
 
 # Crear cliente de BigQuery
 client = bigquery.Client(project='dataproject-2-413010')
@@ -142,5 +143,46 @@ fig = px.density_mapbox(
     mapbox_style="open-street-map", 
     title='Mapa de Densidad de Coordenadas de Viajes'
 )
+
+st.plotly_chart(fig)
+
+# GRÁFICO VIOLIN DE CILINDRADA DE MOTOR
+fig = plt.figure(figsize=(10, 6))
+sns.violinplot(x='cilindraje_motor', data=df)
+
+plt.title('Distribución de la Cilindrada del Motor de los coches')
+plt.xlabel('Cilindrada del Motor')
+
+st.pyplot(fig)
+
+
+# GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR 
+df = client.query(query_df).to_dataframe()
+
+# Crear el gráfico de densidad
+fig = plt.figure(figsize=(10, 6))
+sns.kdeplot(df['puntos_carnet'], shade=True)
+
+plt.title('Distribución de Puntos del Carnet de Conducir (Campana de Gauss)')
+plt.xlabel('Puntos del Carnet de Conducir')
+plt.ylabel('Densidad')
+
+st.pyplot(fig)
+
+# GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
+df = client.query(query_df).to_dataframe()
+
+coches_por_combustible = df['tipo_combustible'].value_counts()
+
+paleta_colores = {
+    'Gasolina': '#FF5733', 
+    'Híbrido': '#45B6AF',  
+    'Eléctrico': '#488AC7' 
+}
+
+fig = px.pie(names=coches_por_combustible.index, values=coches_por_combustible.values, 
+             title='Distribución de Coches por Tipo de Combustible',
+             color=coches_por_combustible.index,
+             color_discrete_map=paleta_colores)
 
 st.plotly_chart(fig)
