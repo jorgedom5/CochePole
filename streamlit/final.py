@@ -35,12 +35,12 @@ viaje_ids = data_viajes["viaje_id"].unique()
 imagenes_predeterminadas = {}  # Un diccionario para almacenar las imágenes predeterminadas por persona
 for index, row in data_personas.iterrows():
     imagenes_predeterminadas[(row['latitud'], row['longitud'])] = random.choice([
-        "img\hombre-1.png", 
-        "img\mujeres-2.png",
-        "img\caballodorado.png",
-        "img\caballodorado.png",
-        "img\grupo.png",
-        "img\lloron.png"
+        "img/hombre-1.png", 
+        "img/mujeres-2.png",
+        "img/caballodorado.png",
+        "img/caballodorado.png",
+        "img/grupo.png",
+        "img/lloron.png"
         ])
 
 # Crear un desplegable para seleccionar la ruta específica
@@ -118,7 +118,7 @@ else:
             folium.Marker([row['latitud'], row['longitud']], icon=icono_persona).add_to(m_viaje)
 
     # Agregar marcador del coche en la posición inicial
-    icono_coche = folium.CustomIcon(icon_image="img\coche-toro.png", icon_size=(32, 32))
+    icono_coche = folium.CustomIcon(icon_image="img/coche-toro.png", icon_size=(32, 32))
     marker_coche = folium.Marker(location=inicio_viaje, icon=icono_coche)
     marker_coche.add_to(m_viaje)
 
