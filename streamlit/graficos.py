@@ -282,7 +282,7 @@ st.plotly_chart(fig)
 st.title('Predicción de pago de viaje para el cliente')
 
 rating = st.slider('Rating del cliente', 0.0, 10.0, 8.0)
-metodo_pago = st.selectbox('Método de pago', ['Efectivo', 'Tarjeta'])
+metodo_pago = st.selectbox('Método de pago', ['Efectivo', 'Tarjeta', 'Bizum'])
 latitud = st.number_input('Latitud del inicio del viaje', value=39.50802)
 longitud = st.number_input('Longitud del inicio del viaje', value=-0.32170)
 latitud_final = st.number_input('Latitud del destino del viaje', value=39.47947)
