@@ -31,7 +31,7 @@ df
 
 # KPI 1: Recaudación total
 recaudacion_total = df['pago_viaje'].sum()
-st.sidebar.metric("Recaudación Total", f"${recaudacion_total:,.2f}", delta=recaudacion_total)
+st.sidebar.metric("Recaudación Total", f"{recaudacion_total:,.2f}€", delta=recaudacion_total)
 
 # KPI 2: Número total de viajes
 total_viajes = df.groupby(['vehiculo_id', 'viaje_id']).size().reset_index(name='count').shape[0]
@@ -39,7 +39,7 @@ st.sidebar.metric("Número Total de Viajes", total_viajes)
 
 # KPI 3: Recaudación promedio por viaje
 recaudacion_promedio_por_viaje = recaudacion_total / total_viajes
-st.sidebar.metric("Recaudación Promedio por Viaje", f"${recaudacion_promedio_por_viaje:,.2f}", delta=recaudacion_promedio_por_viaje)
+st.sidebar.metric("Recaudación Promedio por Viaje", f"{recaudacion_promedio_por_viaje:,.2f}€", delta=recaudacion_promedio_por_viaje)
 
 # KPI 4: Número de conductores activos
 conductores_activos = df['nombre_conductor'].nunique()
@@ -62,6 +62,7 @@ st.sidebar.metric("Edad Media de los Clientes", round(edad_media_clientes, 2), d
 
 # GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
 recaudacion_df = df.groupby('nombre_conductor')['pago_viaje'].sum().reset_index()
+recaudacion_df = recaudacion_df.sort_values(by='pago_viaje', ascending=False)
 
 st.title('Recaudación por Conductor al Final del Día')
 fig_recaudacion = px.bar(recaudacion_df, x='nombre_conductor', y='pago_viaje', labels={'pago_viaje': 'Recaudación'})
