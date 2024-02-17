@@ -188,7 +188,7 @@ def run():
             | 'WriteToBigQuery' >> WriteToBigQuery(
                 table=f"{project_id}:{bq_dataset}.{bq_table}",
                 schema="cliente_id:INTEGER,rating:FLOAT,metodo_pago:STRING,pago_viaje:FLOAT,viaje_id:INTEGER,vehiculo_id:INTEGER,latitud:FLOAT,longitud:FLOAT,latitud_final:FLOAT,longitud_final:FLOAT,timestamp:TIMESTAMP",
-                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER,
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND
             )
         )
