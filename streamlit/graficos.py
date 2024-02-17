@@ -2,133 +2,272 @@ import streamlit as st
 import folium
 from folium.plugins import HeatMap
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from google.cloud import bigquery
+import plotly.express as px
+import plotly.graph_objects as go
+import seaborn as sns
 
 # Crear cliente de BigQuery
 client = bigquery.Client(project='dataproject-2-413010')
 
-## GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
+## QUERY
 
-# Consulta SQL para calcular la recaudación por conductor
-query_recaudacion = """
-SELECT vehiculo_id, SUM(pago_viaje) AS total_recaudado
-FROM `dataproject-2-413010.BBDD.CochePole_BD`
-GROUP BY vehiculo_id
+query_df = """
+SELECT p.*, 
+v.nombre_conductor, v.marca_coche, v.color_coche, v.anio_fabricacion, 
+v.tipo_combustible, v.tiene_calefaccion, v.puntos_carnet, v.cilindraje_motor, v.kilometraje, v.anio_registro_app,
+c.nombre_cliente, c.apellido_cliente, c.edad_cliente, c.genero_cliente,
+c.direccion_cliente, c.trabajo_cliente, c.fecha_registro,
+FROM dataproject-2-413010.BBDD.CochePole_BD p
+left join dataproject-2-413010.BBDD.tabla_vehiculos v on p.vehiculo_id = v.vehiculo_id
+left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente_id
 """
 
-# Ejecutar la consulta y obtener los resultados
-recaudacion_df = client.query(query_recaudacion).to_dataframe()
+df = client.query(query_df).to_dataframe()
 
-# Visualización en Streamlit
-st.title('Recaudación por Conductor al Final del Día')
-st.bar_chart(recaudacion_df.set_index('vehiculo_id'))
+# A BORRAR
+df
 
-## GRÁFICO DE Nº VIAJES POR CLIENTE
+df.dtypes
 
-# Consulta SQL para contar el número de viajes por cliente
-query_viajes_por_cliente = """
-SELECT cliente_id, COUNT(*) AS num_viajes
-FROM `dataproject-2-413010.BBDD.CochePole_BD`
-GROUP BY cliente_id
-"""
 
-# Ejecutar la consulta y obtener los resultados
-viajes_por_cliente_df = client.query(query_viajes_por_cliente).to_dataframe()
+# SECCIÓN KPI
 
-# Visualización en Streamlit
+# KPI 1: Recaudación total
+recaudacion_total = df['pago_viaje'].sum()
+st.sidebar.metric("Recaudación Total", f"{recaudacion_total:,.2f}€", delta=recaudacion_total)
+
+# KPI 2: Número total de viajes
+total_viajes = df.groupby(['vehiculo_id', 'viaje_id']).size().reset_index(name='count').shape[0]
+st.sidebar.metric("Número Total de Viajes", total_viajes)
+
+# KPI 3: Recaudación promedio por viaje
+recaudacion_promedio_por_viaje = recaudacion_total / total_viajes
+st.sidebar.metric("Recaudación Promedio por Viaje", f"{recaudacion_promedio_por_viaje:,.2f}€", delta=recaudacion_promedio_por_viaje)
+
+# KPI 4: Número de conductores activos
+conductores_activos = df['nombre_conductor'].nunique()
+st.sidebar.metric("Número de Conductores Activos", conductores_activos)
+
+# KPI 5: Número de clientes únicos
+clientes_unicos = df['cliente_id'].nunique()
+st.sidebar.metric("Número de Clientes Únicos", clientes_unicos)
+
+# KPI 6: Promedio de rating de clientes
+rating_promedio_conductores = df.groupby('nombre_conductor')['rating'].mean().mean()
+st.sidebar.metric("Rating Promedio de Clientes", round(rating_promedio_conductores, 2), delta=rating_promedio_conductores)
+
+# KPI 7: Promedio de edad de clientes
+edad_media_clientes = df['edad_cliente'].mean()
+st.sidebar.metric("Edad Media de los Clientes", round(edad_media_clientes, 2), delta=edad_media_clientes)
+
+# KPI 8: Kilometraje promedio por viaje
+kilometraje_promedio_por_viaje = df['anio_registro_app'].mean()
+st.sidebar.metric("Año Promedio Registro", f"{kilometraje_promedio_por_viaje:,.0f}")
+
+
+# SECCIÓN GRAFICOS
+
+# GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
+recaudacion_df = df.groupby('nombre_conductor')['pago_viaje'].sum().reset_index()
+recaudacion_df = recaudacion_df.sort_values(by='pago_viaje', ascending=False).head(14)
+
+st.title('Top 14 Ganancias por conductor')
+fig_recaudacion = px.bar(recaudacion_df, x='nombre_conductor', y='pago_viaje', labels={'pago_viaje': 'Recaudación'})
+st.plotly_chart(fig_recaudacion)
+
+# GRÁFICO DE Nº VIAJES POR CLIENTE
+viajes_por_cliente_df = df['cliente_id'].value_counts().reset_index()
+viajes_por_cliente_df.columns = ['cliente_id', 'num_viajes']
+
 st.title('Número de Viajes Realizados por Cliente')
-st.bar_chart(viajes_por_cliente_df.set_index('cliente_id'))
+fig_viajes_por_cliente = px.bar(viajes_por_cliente_df, x='num_viajes', y='cliente_id', labels={'num_viajes': 'Número de Viajes', 'cliente_id': 'ID del Cliente'})
+st.plotly_chart(fig_viajes_por_cliente)
 
-## GRÁFICO DE Nº VIAJES POR CONDUCTOR
+# GRÁFICO DE Nº VIAJES POR CONDUCTOR
+viajes_por_conductor_df = df['vehiculo_id'].value_counts().reset_index()
+viajes_por_conductor_df.columns = ['vehiculo_id', 'num_viajes']
 
-# Consulta SQL para contar el número de viajes por conductor
-query_viajes_por_conductor = """
-SELECT vehiculo_id, COUNT(*) AS num_viajes
-FROM `dataproject-2-413010.BBDD.CochePole_BD`
-GROUP BY vehiculo_id
-ORDER BY num_viajes DESC
-"""
-
-# Ejecutar la consulta y obtener los resultados
-viajes_por_conductor_df = client.query(query_viajes_por_conductor).to_dataframe()
-
-# Visualización en Streamlit
 st.title('Número de Viajes Realizados por Conductor')
-st.bar_chart(viajes_por_conductor_df.set_index('vehiculo_id'))
-
-# También puedes mostrar los datos en forma de tabla si lo deseas
-st.subheader('Detalle de Viajes por Conductor')
-st.write(viajes_por_conductor_df)
-
-## GRÁFICO METODO DE PAGO MÁS UTILIZADO
-
-# Query Método Pago
-
-query_metodo_pago = """
-SELECT 
-    metodo_pago,
-    COUNT(*) AS cantidad,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM `dataproject-2-413010.BBDD.CochePole_BD`), 2) AS porcentaje
-FROM 
-    `dataproject-2-413010.BBDD.CochePole_BD`
-GROUP BY 
-    metodo_pago
-"""
-
-metodo_pago_preferido_df = client.query(query_metodo_pago).to_dataframe()
-
-st.title('Método de pago preferido por los clientes')
-
-# Gráfico de pastel
-fig, ax = plt.subplots()
-metodo_pago_preferido_df.set_index('metodo_pago')['cantidad'].plot(kind='pie', autopct='%1.1f%%', ax=ax)
-ax.set_ylabel('')  # Elimina la etiqueta del eje y
-
-st.pyplot(fig)
-
-# Query Rating
-query_rating_medio_por_vehiculo = """
-SELECT vehiculo_id, AVG(rating) as puntuacion_promedio
-FROM `dataproject-2-413010.BBDD.CochePole_BD`
-GROUP BY vehiculo_id
-"""
-
-rating_medio_por_vehiculo_df = client.query(query_rating_medio_por_vehiculo).to_dataframe()
-
-# Título del Gráfico
-st.title('Nota Promedia de Nuestros Conductores')
-
-# Histograma de los ratings promedio por vehículo
-fig, ax = plt.subplots()
-ax.hist(rating_medio_por_vehiculo_df['puntuacion_promedio'], bins=5, color='skyblue', edgecolor='black')
-ax.set_xlabel('Rating Promedio')
-ax.set_ylabel('Frecuencia')
-ax.set_title('Histograma de Ratings Promedio por Vehículo')
-st.pyplot(fig)
+fig_viajes_por_conductor = px.bar(viajes_por_conductor_df, x='num_viajes', y='vehiculo_id', labels={'num_viajes': 'Número de Viajes', 'vehiculo_id': 'ID del Conductor'})
+st.plotly_chart(fig_viajes_por_conductor)
 
 # ## GRÁFICO MAPA DE CALOR DE COORDENADAS
 
-# query_coordenadas_viaje = """
-# SELECT latitud, longitud
-# FROM `dataproject-2-413010.BBDD.CochePole_BD`
-# """
+fig = px.density_mapbox(
+    df,
+    lat='latitud',
+    lon='longitud',
+    radius=30, # CAMBIAR TAMAÑO CIRCULOS
+    center=dict(lat=df['latitud'].mean(), lon=df['longitud'].mean()),
+    color_continuous_scale="inferno",
+    zoom=12,
+    mapbox_style="open-street-map", 
+    title='Mapa de Densidad de Coordenadas de Viajes'
+)
 
-# # Ejecutar la consulta y obtener los resultados
-# resultados = client.query(query_coordenadas_viaje).result()
+st.plotly_chart(fig)
 
-# # Crear un mapa centrado en un punto promedio de las coordenadas
-# m = folium.Map(location=[0, 0], zoom_start=2)
+# GRÁFICO METODO DE PAGO MÁS UTILIZADO
+metodo_pago_preferido_df = df['metodo_pago'].value_counts().reset_index()
+metodo_pago_preferido_df.columns = ['metodo_pago', 'cantidad']
+metodo_pago_preferido_df['porcentaje'] = metodo_pago_preferido_df['cantidad'] * 100.0 / len(df)
 
-# # Agrupar las coordenadas de los viajes en una lista
-# heat_data = [[row['latitud'], row['longitud']] for row in resultados]
+st.title('Método de pago preferido por los clientes')
+fig_metodo_pago = px.pie(metodo_pago_preferido_df, names='metodo_pago', values='cantidad', labels={'cantidad': 'Cantidad'}, title='Método de Pago Preferido')
+st.plotly_chart(fig_metodo_pago)
 
-# # Agregar el mapa de calor al mapa
-# HeatMap(heat_data).add_to(m)
+rating_medio_por_vehiculo_df = df.groupby('vehiculo_id')['rating'].mean().reset_index()
+rating_medio_por_vehiculo_df.columns = ['vehiculo_id', 'puntuacion_promedio']
 
-# # Guardar el mapa como HTML en una ruta específica
-# html_file_path = "heatmap.html"
-# m.save(html_file_path)
+# GRÁFICO DE NOTA PROMEDIA POR VEHÍCULO
+fig_rating_promedio = px.histogram(rating_medio_por_vehiculo_df, x='puntuacion_promedio', nbins=7,
+                                   labels={'puntuacion_promedio': 'Rating Promedio'},
+                                   title='Histograma de Ratings Promedio por Vehículo')
 
-# # Mostrar el mapa en Streamlit usando un iframe
-# st.write('<iframe src="{}" width="100%" height="500"></iframe>'.format(html_file_path), unsafe_allow_html=True)
+fig_rating_promedio.update_xaxes(range=[1, 10])
+
+fig_rating_promedio.update_traces(marker_color='skyblue', marker_line_color='black', marker_line_width=1)
+
+st.title('Nota Promedia de Nuestros Clientes')
+st.plotly_chart(fig_rating_promedio)
+
+
+# GRÁFICO RECAUDACIÓN MARCA
+recaudacion_por_marca_df = df.groupby('marca_coche')['pago_viaje'].sum().reset_index()
+recaudacion_por_marca_df = recaudacion_por_marca_df.sort_values(by='pago_viaje', ascending=False).head(14)
+
+st.title('Top 14 Recaudación por Marca de Coche')
+fig_recaudacion_por_marca = px.bar(recaudacion_por_marca_df, x='marca_coche', y='pago_viaje', 
+                                   labels={'pago_viaje': 'Recaudación por Marca de Coche'},
+                                   title='Top 14 Recaudación por Marca de Coche')
+st.plotly_chart(fig_recaudacion_por_marca)
+
+# GRÁFICO DE DISTRIBUCIÓN DE TIPO DE COMBUSTIBLE
+tipo_combustible_df = df['tipo_combustible'].value_counts().reset_index()
+tipo_combustible_df.columns = ['tipo_combustible', 'cantidad']
+
+st.title('Distribución del Tipo de Combustible Utilizado por los Vehículos')
+fig_tipo_combustible = px.bar(tipo_combustible_df, x='tipo_combustible', y='cantidad', 
+                              labels={'cantidad': 'Cantidad', 'tipo_combustible': 'Tipo de Combustible'},
+                              title='Distribución del Tipo de Combustible')
+st.plotly_chart(fig_tipo_combustible)
+
+# GRÁFICO DE TARTA: PROPORCIÓN DE INGRESOS POR CLIENTE
+top_clientes_df = df.groupby('cliente_id').agg({'pago_viaje': 'sum', 'nombre_cliente': 'first', 'apellido_cliente': 'first'}).sort_values(by='pago_viaje', ascending=False).head(14).reset_index()
+
+fig_ingresos_por_cliente = px.pie(top_clientes_df, names='nombre_cliente', values='pago_viaje',
+                                  labels={'pago_viaje': 'Recaudación', 'nombre_cliente': 'Nombre del Cliente'},
+                                  title='Proporción de Ingresos por Cliente',
+                                  hover_data=['apellido_cliente'],
+                                  hole=0.3)
+
+st.plotly_chart(fig_ingresos_por_cliente)
+
+
+# GRÁFICO DE BOX PLOT: RELACIÓN ENTRE RATING Y COLOR DE COCHE
+top_colores = df['color_coche'].value_counts().head(14).index.tolist()
+
+df_top_colores = df[df['color_coche'].isin(top_colores)]
+
+fig_boxplot_rating_color = px.box(df_top_colores, x='color_coche', y='rating',
+                                  color='color_coche',
+                                  labels={'rating': 'Rating', 'color_coche': 'Color de Coche'},
+                                  title='Relación entre Rating de Clientes y Color de Coche')
+
+st.title('Box Plot: Relación entre Rating de Clientes y Top 14 Colores de Coche')
+st.plotly_chart(fig_boxplot_rating_color)
+
+
+# GRÁFICO DE DISPERSIÓN ENTRE RATING Y RECAUDACIÓN POR VIAJE
+fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
+                               color='genero_cliente', size='pago_viaje',
+                               labels={'recaudacion_total': 'Recaudación Total', 'rating': 'Rating', 'edad_cliente': 'Edad del Cliente'},
+                               title='Relación Tridimensional entre Recaudación, Rating y Edad del Cliente')
+st.plotly_chart(fig_scatter_3d)
+
+
+# GRÁFICO DE RADAR: PERFIL PROMEDIO DEL CONDUCTOR
+perfil_conductor_df = df.groupby('nombre_conductor').agg({
+    'rating': 'mean',
+    'kilometraje': 'mean',
+    'edad_cliente': 'mean',
+    'puntos_carnet': 'mean'
+}).reset_index()
+
+for col in ['rating', 'kilometraje', 'edad_cliente', 'puntos_carnet']:
+    perfil_conductor_df[col] = (perfil_conductor_df[col] - perfil_conductor_df[col].min()) / (perfil_conductor_df[col].max() - perfil_conductor_df[col].min())
+
+fig_radar = go.Figure()
+
+fig_radar.add_trace(go.Scatterpolar(
+      r=perfil_conductor_df.loc[0, ['rating', 'kilometraje', 'edad_cliente', 'puntos_carnet']],
+      theta=['Rating', 'Kilometraje', 'Edad', 'Puntos de Carnet'],
+      fill='toself',
+      name=perfil_conductor_df.loc[0, 'nombre_conductor']
+))
+
+fig_radar.update_layout(
+    polar=dict(
+        radialaxis=dict(
+            visible=True,
+            range=[0, 1]
+        )),
+    showlegend=True,
+    title='Perfil Promedio del Conductor'
+)
+
+
+
+# GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR
+
+mu, sigma = df['puntos_carnet'].mean(), df['puntos_carnet'].std()
+x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+gaussiana = (1/(sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+histograma = go.Histogram(x=df['puntos_carnet'], histnorm='probability density', name='Histograma')
+
+campana_gauss = go.Scatter(x=x, y=gaussiana, mode='lines', name='Campana de Gauss', line=dict(color='red', width=2))
+
+fig = go.Figure(data=[histograma, campana_gauss])
+
+fig.update_layout(
+    title='Distribución de Puntos del Carnet de Conducir (Histograma y Campana de Gauss)',
+    xaxis=dict(title='Puntos del Carnet de Conducir'),
+    yaxis=dict(title='Densidad'),
+)
+
+st.plotly_chart(fig)
+
+# GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
+
+coches_por_combustible = df['tipo_combustible'].value_counts()
+
+paleta_colores = {
+    'Gasolina': '#FF5733', 
+    'Híbrido': '#45B6AF',  
+    'Eléctrico': '#488AC7' 
+}
+
+fig2 = px.pie(names=coches_por_combustible.index, 
+              values=coches_por_combustible.values, 
+              title='Distribución de Coches por Tipo de Combustible',
+              color=coches_por_combustible.index,
+              color_discrete_map=paleta_colores)
+
+st.plotly_chart(fig2)
+
+# GRÁFICO VIOLIN DE CILINDRADA DE MOTOR
+fig = go.Figure(data=go.Violin(y=df['cilindraje_motor'], box_visible=True, line_color='black', meanline_visible=True,
+                               fillcolor='lightseagreen', opacity=0.6))
+
+fig.update_layout(
+    title='Distribución de la Cilindrada del Motor de los coches',
+    xaxis=dict(title='Cilindrada del Motor (en miles)'),
+    yaxis=dict(title=''),
+    xaxis_tickformat=',d'
+)
+
+st.plotly_chart(fig)
