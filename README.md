@@ -30,6 +30,14 @@ These cloud technologies form the backbone of Toro Rojo's ambitious project, ena
 
 ![alt text](./img/Arquitectura%20DP2.png)
 
+## Data Generation and Machine Learning📊🤖
+
+To enhance the adventure, Toro Rojo's team utilizes an API for generating clients and users. This ensures a dynamic and realistic dataset for their innovative private ride system.
+
+At the culmination of the data processing journey in BigQuery and Dataflow, our heroes have crafted a Machine Learning model. Built on the insights gathered from these platforms, this model stores valuable matches, creating a sophisticated and efficient matching system for the private rides.
+
+![alt text](./img/88.jpeg)
+
 ## How to Contribute🤝👩‍💻👨‍💻
 
 ### Join Toro Rojo's Quest🛡️
