@@ -77,6 +77,10 @@ if selected_page == "Análisis Visual":
 
 
     # SECCIÓN GRAFICOS
+    
+    # VEHÍCULOS
+    
+    st.subheader("VEHÍCULOS")
 
     # GRÁFICO DE RECAUDACIÓN POR CONDUCTOR
     recaudacion_df = df.groupby('nombre_conductor')['pago_viaje'].sum().reset_index()
@@ -85,15 +89,7 @@ if selected_page == "Análisis Visual":
     st.title('Top 14 Ganancias por conductor')
     fig_recaudacion = px.bar(recaudacion_df, x='nombre_conductor', y='pago_viaje', labels={'pago_viaje': 'Recaudación'})
     st.plotly_chart(fig_recaudacion)
-
-    # GRÁFICO DE Nº VIAJES POR CLIENTE
-    viajes_por_cliente_df = df['cliente_id'].value_counts().reset_index()
-    viajes_por_cliente_df.columns = ['cliente_id', 'num_viajes']
-
-    st.title('Número de Viajes Realizados por Cliente')
-    fig_viajes_por_cliente = px.bar(viajes_por_cliente_df, x='num_viajes', y='cliente_id', labels={'num_viajes': 'Número de Viajes', 'cliente_id': 'ID del Cliente'})
-    st.plotly_chart(fig_viajes_por_cliente)
-
+    
     # GRÁFICO DE Nº VIAJES POR CONDUCTOR
     viajes_por_conductor_df = df['vehiculo_id'].value_counts().reset_index()
     viajes_por_conductor_df.columns = ['vehiculo_id', 'num_viajes']
@@ -101,64 +97,7 @@ if selected_page == "Análisis Visual":
     st.title('Número de Viajes Realizados por Conductor')
     fig_viajes_por_conductor = px.bar(viajes_por_conductor_df, x='num_viajes', y='vehiculo_id', labels={'num_viajes': 'Número de Viajes', 'vehiculo_id': 'ID del Conductor'})
     st.plotly_chart(fig_viajes_por_conductor)
-
-    # ## GRÁFICO MAPA DE CALOR DE COORDENADAS
-
-    fig = px.density_mapbox(
-        df,
-        lat='latitud',
-        lon='longitud',
-        radius=25, # CAMBIAR TAMAÑO CIRCULOS
-        center=dict(lat=df['latitud'].mean(), lon=df['longitud'].mean()),
-        color_continuous_scale="inferno",
-        zoom=12,
-        mapbox_style="open-street-map", 
-        title='Mapa de Densidad de Coordenadas de Viajes -- Recogidas'
-    )
-
-    st.plotly_chart(fig)
     
-    # ## GRÁFICO MAPA DE CALOR DE COORDENADAS 2
-    
-    fig_heatmap_final = px.density_mapbox(
-    df,
-    lat='latitud_final',
-    lon='longitud_final',
-    radius=25, 
-    center=dict(lat=df['latitud_final'].mean(), lon=df['longitud_final'].mean()),
-    color_continuous_scale="inferno",
-    zoom=12,
-    mapbox_style="open-street-map", 
-    title='Mapa de Densidad de Coordenadas de Viajes -- Destinos'
-    )
-
-    st.plotly_chart(fig_heatmap_final)
-
-    # GRÁFICO METODO DE PAGO MÁS UTILIZADO
-    metodo_pago_preferido_df = df['metodo_pago'].value_counts().reset_index()
-    metodo_pago_preferido_df.columns = ['metodo_pago', 'cantidad']
-    metodo_pago_preferido_df['porcentaje'] = metodo_pago_preferido_df['cantidad'] * 100.0 / len(df)
-
-    st.title('Método de pago preferido por los clientes')
-    fig_metodo_pago = px.pie(metodo_pago_preferido_df, names='metodo_pago', values='cantidad', labels={'cantidad': 'Cantidad'}, title='Método de Pago Preferido')
-    st.plotly_chart(fig_metodo_pago)
-
-    rating_medio_por_vehiculo_df = df.groupby('vehiculo_id')['rating'].mean().reset_index()
-    rating_medio_por_vehiculo_df.columns = ['vehiculo_id', 'puntuacion_promedio']
-
-    # GRÁFICO DE NOTA PROMEDIA POR VEHÍCULO
-    fig_rating_promedio = px.histogram(rating_medio_por_vehiculo_df, x='puntuacion_promedio', nbins=7,
-                                    labels={'puntuacion_promedio': 'Rating Promedio'},
-                                    title='Histograma de Ratings Promedio por Vehículo')
-
-    fig_rating_promedio.update_xaxes(range=[1, 10])
-
-    fig_rating_promedio.update_traces(marker_color='skyblue', marker_line_color='black', marker_line_width=1)
-
-    st.title('Nota Promedia de Nuestros Clientes')
-    st.plotly_chart(fig_rating_promedio)
-
-
     # GRÁFICO RECAUDACIÓN MARCA
     recaudacion_por_marca_df = df.groupby('marca_coche')['pago_viaje'].sum().reset_index()
     recaudacion_por_marca_df = recaudacion_por_marca_df.sort_values(by='pago_viaje', ascending=False).head(14)
@@ -178,19 +117,7 @@ if selected_page == "Análisis Visual":
                                 labels={'cantidad': 'Cantidad', 'tipo_combustible': 'Tipo de Combustible'},
                                 title='Distribución del Tipo de Combustible')
     st.plotly_chart(fig_tipo_combustible)
-
-    # GRÁFICO DE TARTA: PROPORCIÓN DE INGRESOS POR CLIENTE
-    top_clientes_df = df.groupby('cliente_id').agg({'pago_viaje': 'sum', 'nombre_cliente': 'first', 'apellido_cliente': 'first'}).sort_values(by='pago_viaje', ascending=False).head(14).reset_index()
-
-    fig_ingresos_por_cliente = px.pie(top_clientes_df, names='nombre_cliente', values='pago_viaje',
-                                    labels={'pago_viaje': 'Recaudación', 'nombre_cliente': 'Nombre del Cliente'},
-                                    title='Proporción de Ingresos por Cliente',
-                                    hover_data=['apellido_cliente'],
-                                    hole=0.3)
-
-    st.plotly_chart(fig_ingresos_por_cliente)
-
-
+    
     # GRÁFICO DE BOX PLOT: RELACIÓN ENTRE RATING Y COLOR DE COCHE
     top_colores = df['color_coche'].value_counts().head(14).index.tolist()
 
@@ -242,29 +169,7 @@ if selected_page == "Análisis Visual":
         showlegend=True,
         title='Perfil Promedio del Conductor'
     )
-
-
-
-    # GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR
-
-    mu, sigma = df['puntos_carnet'].mean(), df['puntos_carnet'].std()
-    x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-    gaussiana = (1/(sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
-
-    histograma = go.Histogram(x=df['puntos_carnet'], histnorm='probability density', name='Histograma')
-
-    campana_gauss = go.Scatter(x=x, y=gaussiana, mode='lines', name='Campana de Gauss', line=dict(color='red', width=2))
-
-    fig = go.Figure(data=[histograma, campana_gauss])
-
-    fig.update_layout(
-        title='Distribución de Puntos del Carnet de Conducir (Histograma y Campana de Gauss)',
-        xaxis=dict(title='Puntos del Carnet de Conducir'),
-        yaxis=dict(title='Densidad'),
-    )
-
-    st.plotly_chart(fig)
-
+    
     # GRÁFICO DE LOS TIPOS DE VEHÍCULOS UTILIZADOS
 
     coches_por_combustible = df['tipo_combustible'].value_counts()
@@ -295,6 +200,111 @@ if selected_page == "Análisis Visual":
     )
 
     st.plotly_chart(fig)
+    
+    
+    
+    
+    # VEHÍCULOS
+    
+    st.subheader("CLIENTES")
+
+    # GRÁFICO DE Nº VIAJES POR CLIENTE
+    viajes_por_cliente_df = df['cliente_id'].value_counts().reset_index()
+    viajes_por_cliente_df.columns = ['cliente_id', 'num_viajes']
+
+    st.title('Número de Viajes Realizados por Cliente')
+    fig_viajes_por_cliente = px.bar(viajes_por_cliente_df, x='num_viajes', y='cliente_id', labels={'num_viajes': 'Número de Viajes', 'cliente_id': 'ID del Cliente'})
+    st.plotly_chart(fig_viajes_por_cliente)
+
+    # ## GRÁFICO MAPA DE CALOR DE COORDENADAS
+
+    fig = px.density_mapbox(
+        df,
+        lat='latitud',
+        lon='longitud',
+        radius=25, # CAMBIAR TAMAÑO CIRCULOS
+        center=dict(lat=df['latitud'].mean(), lon=df['longitud'].mean()),
+        color_continuous_scale="inferno",
+        zoom=12,
+        mapbox_style="open-street-map", 
+        title='Mapa de Densidad de Coordenadas de Viajes -- Recogidas'
+    )
+
+    st.plotly_chart(fig)
+    
+    # ## GRÁFICO MAPA DE CALOR DE COORDENADAS 2
+    
+    fig_heatmap_final = px.density_mapbox(
+    df,
+    lat='latitud_final',
+    lon='longitud_final',
+    radius=25, 
+    center=dict(lat=df['latitud_final'].mean(), lon=df['longitud_final'].mean()),
+    color_continuous_scale="inferno",
+    zoom=12,
+    mapbox_style="open-street-map", 
+    title='Mapa de Densidad de Coordenadas de Viajes -- Destinos'
+    )
+
+    st.plotly_chart(fig_heatmap_final)
+
+    # GRÁFICO METODO DE PAGO MÁS UTILIZADO
+    metodo_pago_preferido_df = df['metodo_pago'].value_counts().reset_index()
+    metodo_pago_preferido_df.columns = ['metodo_pago', 'cantidad']
+    metodo_pago_preferido_df['porcentaje'] = metodo_pago_preferido_df['cantidad'] * 100.0 / len(df)
+
+    st.title('Método de pago preferido por los clientes')
+    fig_metodo_pago = px.pie(metodo_pago_preferido_df, names='metodo_pago', values='cantidad', labels={'cantidad': 'Cantidad'}, title='Método de Pago Preferido')
+    st.plotly_chart(fig_metodo_pago)
+
+    rating_medio_por_vehiculo_df = df.groupby('vehiculo_id')['rating'].mean().reset_index()
+    rating_medio_por_vehiculo_df.columns = ['vehiculo_id', 'puntuacion_promedio']
+
+    # GRÁFICO DE NOTA PROMEDIA POR CLIENTE
+    fig_rating_promedio = px.histogram(rating_medio_por_vehiculo_df, x='puntuacion_promedio', nbins=7,
+                                    labels={'puntuacion_promedio': 'Rating Promedio'},
+                                    title='Histograma de Ratings Promedio por Cliente')
+
+    fig_rating_promedio.update_xaxes(range=[1, 10])
+
+    fig_rating_promedio.update_traces(marker_color='skyblue', marker_line_color='black', marker_line_width=1)
+
+    st.title('Nota Promedia de Nuestros Clientes')
+    st.plotly_chart(fig_rating_promedio)
+
+    # GRÁFICO DE TARTA: PROPORCIÓN DE INGRESOS POR CLIENTE
+    top_clientes_df = df.groupby('cliente_id').agg({'pago_viaje': 'sum', 'nombre_cliente': 'first', 'apellido_cliente': 'first'}).sort_values(by='pago_viaje', ascending=False).head(14).reset_index()
+
+    fig_ingresos_por_cliente = px.pie(top_clientes_df, names='nombre_cliente', values='pago_viaje',
+                                    labels={'pago_viaje': 'Recaudación', 'nombre_cliente': 'Nombre del Cliente'},
+                                    title='Proporción de Ingresos por Cliente',
+                                    hover_data=['apellido_cliente'],
+                                    hole=0.3)
+
+    st.plotly_chart(fig_ingresos_por_cliente)
+
+
+    # GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR
+
+    mu, sigma = df['puntos_carnet'].mean(), df['puntos_carnet'].std()
+    x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+    gaussiana = (1/(sigma * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+    histograma = go.Histogram(x=df['puntos_carnet'], histnorm='probability density', name='Histograma')
+
+    campana_gauss = go.Scatter(x=x, y=gaussiana, mode='lines', name='Campana de Gauss', line=dict(color='red', width=2))
+
+    fig = go.Figure(data=[histograma, campana_gauss])
+
+    fig.update_layout(
+        title='Distribución de Puntos del Carnet de Conducir (Histograma y Campana de Gauss)',
+        xaxis=dict(title='Puntos del Carnet de Conducir'),
+        yaxis=dict(title='Densidad'),
+    )
+
+    st.plotly_chart(fig)
+
+    
     
     
 
