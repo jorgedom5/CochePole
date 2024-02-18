@@ -16,6 +16,13 @@ best_model = joblib.load('../machine_learning/modelo_final.joblib')
 # Crear cliente de BigQuery
 client = bigquery.Client(project='dataproject-2-413010')
 
+
+st.set_page_config(
+    page_title="BLABLACAR MARVELOUS STREAMLIT",
+    page_icon="img/logo.png"
+)
+
+
 ## QUERY
 
 query_df = """
@@ -108,15 +115,16 @@ if selected_page == "Análisis Visual":
                                     title='Top 14 Recaudación por Marca de Coche')
     st.plotly_chart(fig_recaudacion_por_marca)
 
-    # GRÁFICO DE DISTRIBUCIÓN DE TIPO DE COMBUSTIBLE
-    tipo_combustible_df = df['tipo_combustible'].value_counts().reset_index()
-    tipo_combustible_df.columns = ['tipo_combustible', 'cantidad']
+    # GRÁFICO RECAUDACIÓN AÑO DEL COCHE
+    recaudacion_por_anio_df = df.groupby('anio_fabricacion')['pago_viaje'].sum().reset_index()
+    recaudacion_por_anio_df = recaudacion_por_anio_df.sort_values(by='pago_viaje', ascending=False)
 
-    st.title('Distribución del Tipo de Combustible Utilizado por los Vehículos')
-    fig_tipo_combustible = px.bar(tipo_combustible_df, x='tipo_combustible', y='cantidad', 
-                                labels={'cantidad': 'Cantidad', 'tipo_combustible': 'Tipo de Combustible'},
-                                title='Distribución del Tipo de Combustible')
-    st.plotly_chart(fig_tipo_combustible)
+    fig_recaudacion_por_anio = px.bar(recaudacion_por_anio_df, x='anio_fabricacion', y='pago_viaje',
+                                    labels={'anio_fabricacion': 'Año de Fabricación del Coche', 'pago_viaje': 'Recaudación Total'},
+                                    title='Recaudación por Año de Fabricación del Coche'
+                                    )
+
+    st.plotly_chart(fig_recaudacion_por_anio)
     
     # GRÁFICO DE BOX PLOT: RELACIÓN ENTRE RATING Y COLOR DE COCHE
     top_colores = df['color_coche'].value_counts().head(14).index.tolist()
@@ -130,14 +138,6 @@ if selected_page == "Análisis Visual":
 
     st.title('Box Plot: Relación entre Rating de Clientes y Top 14 Colores de Coche')
     st.plotly_chart(fig_boxplot_rating_color)
-
-
-    # GRÁFICO DE DISPERSIÓN ENTRE RATING Y RECAUDACIÓN POR VIAJE
-    fig_scatter_3d = px.scatter_3d(df, x='pago_viaje', y='rating', z='edad_cliente',
-                                color='genero_cliente', size='pago_viaje',
-                                labels={'recaudacion_total': 'Recaudación Total', 'rating': 'Rating', 'edad_cliente': 'Edad del Cliente'},
-                                title='Relación Tridimensional entre Recaudación, Rating y Edad del Cliente')
-    st.plotly_chart(fig_scatter_3d)
 
 
     # GRÁFICO DE RADAR: PERFIL PROMEDIO DEL CONDUCTOR
@@ -204,7 +204,7 @@ if selected_page == "Análisis Visual":
     
     
     
-    # VEHÍCULOS
+    # CLIENTES
     
     st.subheader("CLIENTES")
 
@@ -272,17 +272,6 @@ if selected_page == "Análisis Visual":
     st.title('Nota Promedia de Nuestros Clientes')
     st.plotly_chart(fig_rating_promedio)
 
-    # GRÁFICO DE TARTA: PROPORCIÓN DE INGRESOS POR CLIENTE
-    top_clientes_df = df.groupby('cliente_id').agg({'pago_viaje': 'sum', 'nombre_cliente': 'first', 'apellido_cliente': 'first'}).sort_values(by='pago_viaje', ascending=False).head(14).reset_index()
-
-    fig_ingresos_por_cliente = px.pie(top_clientes_df, names='nombre_cliente', values='pago_viaje',
-                                    labels={'pago_viaje': 'Recaudación', 'nombre_cliente': 'Nombre del Cliente'},
-                                    title='Proporción de Ingresos por Cliente',
-                                    hover_data=['apellido_cliente'],
-                                    hole=0.3)
-
-    st.plotly_chart(fig_ingresos_por_cliente)
-
 
     # GRÁFICO DE CAMPANA DE PUNTOS DE CARNET DE CONDUCIR
 
@@ -298,11 +287,18 @@ if selected_page == "Análisis Visual":
 
     fig.update_layout(
         title='Distribución de Puntos del Carnet de Conducir (Histograma y Campana de Gauss)',
-        xaxis=dict(title='Puntos del Carnet de Conducir'),
+        xaxis=dict(title='Puntos del Carnet de Conducir', range=[1, 15]),  # Set the x-axis range
         yaxis=dict(title='Densidad'),
     )
 
     st.plotly_chart(fig)
+    
+    # HISTOGRAMA EDAD
+    
+    fig_edad_cliente = px.histogram(df, x='edad_cliente', nbins=20,
+                                labels={'edad_cliente': 'Edad del Cliente'},
+                                title='Histograma de Edad de Clientes')
+    st.plotly_chart(fig_edad_cliente)
 
     
     
