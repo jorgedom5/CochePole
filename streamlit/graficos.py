@@ -31,6 +31,9 @@ left join dataproject-2-413010.BBDD.tabla_clientes c on p.cliente_id = c.cliente
 
 df = client.query(query_df).to_dataframe()
 
+logo_path = 'img/logo.png'  # Cambia la ruta a la ubicación real de tu logo
+logo_image = st.image(logo_path, use_column_width=True)
+
 # botones
 selected_page = st.radio("Seleccione una sección:", ["Análisis Visual", "Predicción ML"])
 
