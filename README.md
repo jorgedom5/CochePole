@@ -30,7 +30,7 @@ These cloud technologies form the backbone of Toro Rojo's ambitious project, ena
 
 ![alt text](./img/Arquitectura%20DP2.png)
 
-## Matching and Coordination Architecture 🚗👩‍💻🐃
+## Matching Architecture 🚗👩‍💻🐃
 
 In the architecture of Toro Rojo's private transportation initiative, a pivotal element emerges, not as a mere piece of code, but as the beacon guiding the orchestration of journeys. This system element employs advanced data processing techniques to seamlessly manage and facilitate the interaction between vehicles and users across Valencia's vibrant cityscape.
 
